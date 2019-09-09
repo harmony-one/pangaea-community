@@ -1,0 +1,57 @@
+#!/bin/bash
+#### this script will constantly pick random online node from your shard and send a random ampunt
+
+#### place where are your binaries reside. /root/ by default
+HARMONY_ROOT="/root"
+#### first part of sending amount. like 0.0125 0.014805 0.0111 etc
+#### intentionally left very small by default to prevent spending all tokens
+amount_base="0.01"
+
+command -v wget > /dev/null 2>&1 && wget_is_installed="yes" || \
+	command -v curl > /dev/null 2>&1 && curl_is_installed="yes" || \
+		{ echo >&2 "I require curl OR wget but they are not installed. Aborting."; \
+		echo >&2 "try sudo apt-get install curl. or sudo apt-get install wget"; exit 1; }
+
+if [ ! -x ${HARMONY_ROOT}/wallet.sh ]; then echo >&2 "oops ${HARMONY_ROOT}/wallet.sh is not executable! Are you sure you did chmod u+x? are you sure that harmony is installed in ${HARMONY_ROOT}?"; exit 2; fi
+if [ ! -x ${HARMONY_ROOT}/wallet ]; then echo >&2 "oops ${HARMONY_ROOT}/wallet is not executable!"; exit 2; fi
+
+function get_pga_network_csv () {
+	if [ $wget_is_installed ];
+	then
+		pga_network_csv=$(wget -qO- https://harmony.one/pga/network.csv)
+	else
+		pga_network_csv=$(curl -s https://harmony.one/pga/network.csv)
+	fi
+}
+
+cd ${HARMONY_ROOT}
+
+wallet=$(cd ${HARMONY_ROOT}; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | cut -c10-51);
+echo my wallet=$wallet
+
+shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
+echo my shard=$shardid
+
+while true
+do
+        echo ""
+        date
+
+        get_pga_network_csv
+        online_nodes_in_shard=$(echo "${pga_network_csv}" | grep ",$shardid,online")
+        online_nodes_count=$(echo "${online_nodes_in_shard}" | grep . | wc -l)	### small hack: grep . removes empty lines.
+        if [ $online_nodes_count -lt 1 ];
+        then
+        	echo "0 nodes online in shard $shardid; will sleep 60 sec"
+        	sleep 60
+        	continue
+        fi
+        recipient_string_number=$(( $(($RANDOM % $online_nodes_count)) + 1 ))
+        recipient=$(echo "${online_nodes_in_shard}" | head -n"$recipient_string_number"| tail -n 1 | cut -c1-42)
+        amount=$amount_base$(($RANDOM + 1))
+
+	echo "will send $amount tokens to $recipient with this command:"
+        echo "./wallet.sh -t transfer -from $wallet -to $recipient -shardID $shardid -amount $amount -pass pass:"
+        ./wallet.sh -t transfer -from $wallet -to $recipient -shardID $shardid -amount $amount -pass pass:
+        (cd ${HARMONY_ROOT}; LD_LIBRARY_PATH=. ./wallet -p pangaea balances);
+done
