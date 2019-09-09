@@ -1,9 +1,9 @@
 #!/bin/bash
-#### this script will constantly pick random online node from your shard and send a random ampunt
+#### this script will constantly pick random online node from your shard and send a random amount
 
-#### place where are your binaries reside. /root/ by default
+#### place where are your harmony files reside. /root by default
 HARMONY_ROOT="/root"
-#### first part of sending amount. like 0.0125 0.014805 0.0111 etc
+#### left part of sending amount. result will be LEFT_string+Right_sring like 0.0125 0.014805 0.0111 etc
 #### intentionally left very small by default to prevent spending all tokens
 amount_base="0.01"
 
