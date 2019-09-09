@@ -1,17 +1,30 @@
 #!/bin/bash
-# Depends on "curl" and "jq"
+
+# Author: Jose Carlos
+# Contact Telegram: @josectheone
 # Credits to "AG" for sharing the base script
+
+# Requires root permissions
+if [[ $UID != 0 ]]; then
+	exec sudo -- "$0" "$@"
+fi
+
+clear
 
 # Install dependencies if needed
 apt list curl | grep installed &>/dev/null
 	if [[ $? != 0 ]]; then
-		sudo apt -y install curl
+		dep1=curl
 	fi
 
 apt list jq | grep installed &>/dev/null
 	if [[ $? != 0 ]]; then
-		sudo apt -y install jq
+		dep2=jq
 	fi
+
+if [[ -n "$dep1" ]] || [[ -n "$dep2" ]]; then
+	apt -y install $dep1 $dep2
+fi
 
 # Set static variables
 	# Set home folder as default install path (cd ~)
