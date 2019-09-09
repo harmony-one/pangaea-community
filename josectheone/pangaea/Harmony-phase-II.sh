@@ -5,12 +5,12 @@
 # Install dependencies if needed
 apt list curl | grep installed &>/dev/null
 	if [[ $? != 0 ]]; then
-		apt -y install curl
+		sudo apt -y install curl
 	fi
 
 apt list jq | grep installed &>/dev/null
 	if [[ $? != 0 ]]; then
-		apt -y install jq
+		sudo apt -y install jq
 	fi
 
 # Set static variables
