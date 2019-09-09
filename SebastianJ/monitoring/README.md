@@ -19,7 +19,7 @@ This node status script has the following features:
 7. Will check your shard's status on https://harmony.one/pga/network
 8. Will check your node's online status using https://harmony.one/pga/network.csv
 9. Will check your sync status, block count and bingo status using latest/zero*.log. The script will also alert if you're more than 1000 blocks behind the latest reported block number for your shard and it will also report when you haven't received any bingos for more than a day.
-10. + a bunch of other features
+10. and a bunch of other features
 
 ### Requirements
 The only requirement is that wget is installed (which it typically is). The rest of the script is normal bash.
