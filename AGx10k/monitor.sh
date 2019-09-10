@@ -10,8 +10,15 @@
 ##### mon
 #####
 
-#### where your harmony node is located. by default = /root
-HARMONY_ROOT="/root"
+#### place where are your harmony files reside. /root by default
+settings_HARMONY_ROOT="/root"
+
+###
+if [ -z ${HARMONY_ROOT+x} ]; then
+        HARMONY_ROOT="${settings_HARMONY_ROOT}"
+else
+        echo "HARMONY_ROOT was set outside this script=${HARMONY_ROOT}";
+fi
 
 command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; echo >&2 "try apt-get install jq."; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "I require curl but it's not installed.  Aborting."; echo >&2 "try apt-get install curl."; exit 1; }
