@@ -31,7 +31,7 @@ apt list jq | grep installed &>/dev/null
 
 if [[ -n "$dep1" ]] || [[ -n "$dep2" ]]; then
 	apt -y install $dep1 $dep2
-fi
+fi; clear
 
 while true; do
 
