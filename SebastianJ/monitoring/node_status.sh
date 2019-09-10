@@ -254,7 +254,7 @@ check_node() {
   fi
   
   if ls $node_path/latest/zerolog*.log 1> /dev/null 2>&1; then
-    shard=`tac $node_path/latest/zerolog*.log | grep -oam 1 -E "\"(blockShard|[Ss]hardID)\":[0-3]" | grep -oam 1 -E "([0-3]+)"`
+    parse_shard_id
     
     if [ -z "$shard" ]; then
       error_message "Can't determine your shard id - can't parse your shard id from latest/zerolog*.log."
@@ -479,6 +479,10 @@ parse_from_zerolog() {
   else
     error_message "Can't find ${node_path}/latest/zerolog*.log - are you sure you've entered the correct node path ($node_path)?"
   fi
+}
+
+parse_shard_id() {
+  shard=`tac $node_path/latest/*.log | grep -oam 1 -E "\"([Ss]hardID)\":[0-3]" | grep -oam 1 -E "([0-3]+)"`
 }
 
 parse_timestamp() {
