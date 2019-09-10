@@ -86,12 +86,17 @@ then
 	fi
 
 	#### BINGO
-	last_bingo_ago=$(( $(date +"%s") - $(date --date=$((cd "${HARMONY_ROOT}"; tac latest/zero*.log | grep -am 1 "BINGO" ) | jq -r '.time') +%s) ))
-	if [ $last_bingo_ago -gt 100 ];
-	then
-		echo -e "last BINGO was found \033[33m$last_bingo_ago\033[0m seconds ago"
+	last_bingo_found=$(cd "${HARMONY_ROOT}"; tac latest/zero*.log | grep -am 1 "BINGO");
+	if [ $? -gt 0 ]; then
+		echo -e "\033[31mBINGO not found\033[0m\n"
 	else
-		echo -e "last BINGO was found $last_bingo_ago seconds ago"
+		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(echo "$last_bingo_found" | jq -r '.time') +%s) ))
+		if [ $last_bingo_ago -gt 100 ];
+		then
+			echo -e "last BINGO was found \033[33m$last_bingo_ago\033[0m seconds ago"
+		else
+			echo -e "last BINGO was found $last_bingo_ago seconds ago"
+		fi
 	fi
 else
 	echo -e "\033[31m./harmony is not running!!!\033[0m"
