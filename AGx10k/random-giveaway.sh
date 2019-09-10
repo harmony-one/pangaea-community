@@ -38,7 +38,7 @@ do
         date
 
         get_pga_network_csv
-        online_nodes_in_shard=$(echo "${pga_network_csv}" | grep ",$shardid,online")
+        online_nodes_in_shard=$(echo "${pga_network_csv}" | grep ",$shardid,true")
         online_nodes_count=$(echo "${online_nodes_in_shard}" | grep . | wc -l)	### small hack: grep . removes empty lines.
         if [ $online_nodes_count -lt 1 ];
         then
