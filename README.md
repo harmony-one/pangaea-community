@@ -63,7 +63,7 @@ Goals:
 
 We want to make sure that everyone is rewarded for the work they put into Pangaea. This means covering the basic costs of operating a node as well as additional incentives for those who go above and beyond.
 
-### How to contribute your scripts/code to Pangaea
+## How to contribute your scripts/code to Pangaea
 
 We welcome community contributed scripts/code.
 
