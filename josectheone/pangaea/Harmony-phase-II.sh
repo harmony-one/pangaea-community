@@ -7,9 +7,16 @@
 # Requires root permissions
 if [[ $UID != 0 ]]; then
 	exec sudo -- "$0" "$@"
-fi
+fi; clear
 
-clear
+# User defined fields here
+base_amount=0.001 # set the desired amount to send
+harmony_home=~ # home folder by default
+
+# Set static variables
+wallet=$(cd ${harmony_home}; LD_LIBRARY_PATH=. ./wallet.sh -t list | grep account | awk '{print $2}');
+shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
+amount=$base_amount$(($RANDOM + 1));
 
 # Install dependencies if needed
 apt list curl | grep installed &>/dev/null
@@ -26,14 +33,6 @@ if [[ -n "$dep1" ]] || [[ -n "$dep2" ]]; then
 	apt -y install $dep1 $dep2
 fi
 
-# Set static variables
-	# Set home folder as default install path (cd ~)
-	wallet=$(cd ~; LD_LIBRARY_PATH=. ./wallet.sh -t list | grep account | awk '{print $2}');
-	# Defines the shard to use
-	shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
-	# Defines the base ammount to send in every TX	
-	amount=0.001$(($RANDOM + 1));
-
 while true; do
 
 	# Set dinamic variables 
@@ -43,5 +42,5 @@ while true; do
 	recipient=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".nodes.online | map(select(. != "'$wallet'")) | .['$rand']');
 
 	# Run wallet transfers
-	./wallet.sh -t transfer --from $wallet --to $recipient --amount $amount --shardID $shardid --pass pass: & wait & sleep 10
+	./wallet.sh -t transfer -from $wallet -to $recipient -amount $amount -shardID $shardid -toShardID $shardid -pass pass: & wait & sleep 10
 done
