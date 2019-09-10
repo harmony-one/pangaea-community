@@ -51,7 +51,7 @@ then
 	#### get wallet/shard status from https://harmony.one/pga/network
 	wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | awk '{print $2}');
 	pga_out=$(curl -s https://harmony.one/pga/network.json);
-	if ! jq -e . >/dev/null 2>&1 <<<"$pga_out"; then
+        if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
 		echo -e "\033[33mhttps://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status\033[0m"
 	else
 		shardstatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".status')
