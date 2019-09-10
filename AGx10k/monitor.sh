@@ -57,7 +57,7 @@ then
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
-						echo "shardstatus=\"$sshardstatus\", nodestatus=\"$nodestatus\""
+						echo "shardstatus=\"$shardstatus\", nodestatus=\"$nodestatus\""
 					;;
 					*)						#### nodestatus is not null, not empty string, not not numbers - it is online
 						 echo -e "wallet ${wallet} ONLINE and shard is ONLINE"
@@ -71,7 +71,7 @@ then
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
-						echo "shardstatus=\"$sshardstatus\", nodestatus=\"$nodestatus\""
+						echo "shardstatus=\"$shardstatus\", nodestatus=\"$nodestatus\""
 					;;
 					*)						#### nodestatus is not null, not empty string, not not numbers - it is online
 						echo -e "wallet ${wallet} ONLINE and shard $shardid \033[33mOFFLINE\033[0m"
@@ -80,7 +80,7 @@ then
 			;;
 			*)
 				echo "possible error in parsing pga/network output - shardstatus is not offline/online"
-				echo "shardstatus=\"$sshardstatus\", nodestatus=\"$nodestatus\""
+				echo "shardstatus=\"$shardstatus\", nodestatus=\"$nodestatus\""
 			;;
 		esac
 	fi
