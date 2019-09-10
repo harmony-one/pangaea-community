@@ -55,6 +55,12 @@ then
 		echo -e "\033[33mhttps://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status\033[0m"
 	else
 		shardstatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".status')
+		shardstatus_time=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".last_updated')
+		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
+		if [ $shardstatus_ago -gt 1800 ] ; then
+		        echo -e "\033[33mstatus page was updated more than 30m ago = ${shardstatus_ago}s\033[0m"
+
+		fi
 		nodestatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".nodes.online | index("'$wallet'")')
 		case "x$shardstatus" in
 			xonline)
