@@ -6,7 +6,7 @@ you need to adjust the following:<br>
 - working directory (~ home as default)
 - desired time frame (10 seg as default)
 <br>
-<b>Steps to use<br>
+Steps to use<br>
 - tmux new -s pangaea_phaseII
 - chmod +x send_tx.sh
 - ./send_tx.sh
