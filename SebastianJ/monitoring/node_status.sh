@@ -522,6 +522,12 @@ identify_base16_address() {
 check_bls_keyfile_status() {
   download_file "https://bit.ly" "pga-keys"
   bls_public_key=$(cat ${temp_dir}/pga-keys | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
+  
+  if [ -z "$bls_public_key" ]; then
+    # Occasionally the script can't download the key file, fallback to using the github url
+    download_file "https://raw.githubusercontent.com/harmony-one/harmony/master/internal/genesis" "foundational_pangaea.go"
+    bls_public_key=$(cat ${temp_dir}/foundational_pangaea.go | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
+  fi
 }
 
 run_wallet_command() {
