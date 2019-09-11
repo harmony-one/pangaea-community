@@ -23,10 +23,6 @@ Steps to use this script:
 *** github_username, repo, twitter_handle, email
 -->
 
-
-
-
-
 <!-- PROJECT SHIELDS -->
 <!--
 *** I'm using markdown "reference style" links for readability.
@@ -40,21 +36,12 @@ Steps to use this script:
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
 
 
-
-<!-- PROJECT LOGO -->
-<br />
-<p align="center">
-  <a href="https://github.com/josectheone/pangaea-community">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
-
-  <h3 align="center">YOUR_TITLE</h3>
+<h3 align="center">Random Transactions generator script</h3>
 
   <p align="center">
-    YOUR_SHORT_DESCRIPTION
+    Sends a transaction every N time (10 seg default) to random online nodes in the Harmony testnet (Pangaea)
     <br />
     <a href="https://github.com/josectheone/pangaea-community"><strong>Explore the docs »</strong></a>
     <br />
@@ -89,20 +76,11 @@ Steps to use this script:
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-Here's a blank template to get started:
-**To avoid retyping too much info. Do a search and replace with your text editor for the following:**
-`github_username`, `repo`, `twitter_handle`, `email`
-
+**Contribution to the community to easy the network testing process**
 
 ### Built With
 
-* []()
-* []()
-* []()
-
-
+* [](shell)
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -111,10 +89,10 @@ To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
+* curl
+* jq
 ```sh
-npm install npm@latest -g
+sudo apt install curl jq
 ```
 
 ### Installation
@@ -127,8 +105,6 @@ git clone https:://github.com/josectheone/pangaea-community.git
 ```sh
 npm install
 ```
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
@@ -145,7 +121,6 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 See the [open issues](https://github.com/josectheone/pangaea-community/issues) for a list of proposed features (and known issues).
 
 
-
 <!-- CONTRIBUTING -->
 ## Contributing
 
@@ -157,14 +132,10 @@ Contributions are what make the open source community such an amazing place to b
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-
-
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
-
-
 
 <!-- CONTACT -->
 ## Contact
@@ -173,18 +144,12 @@ Jose Carlos - [@josecthetwo](https://twitter.com/josecthetwo)
 
 Project Link: [https://github.com/josectheone/pangaea-community](https://github.com/josectheone/pangaea-community)
 
-
-
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 
+* [](AG)
 * []()
 * []()
-* []()
-
-
-
-
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
