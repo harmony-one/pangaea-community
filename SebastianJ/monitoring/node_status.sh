@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1.1"
+version="0.1.2"
 
 # Author: Sebastian Johnsson - https://github.com/SebastianJ
 #
