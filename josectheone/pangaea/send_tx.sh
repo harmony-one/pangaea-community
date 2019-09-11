@@ -12,18 +12,18 @@ amount_base=0.001; # The amount you wish to send in every transaction
 
 # Check for dependencies
 apt list jq | grep installed &>/dev/null
-			if [[ $? != 0 ]]; then
-        echo "Please install jq before running this script use the command:"
-        echo "sudo apt install jq"
+if [[ $? != 0 ]]; then
+	echo "Please install jq before running this script use the command:"
+	echo "sudo apt install jq"
         exit 0
-			else
-				apt list curl | grep installed &>/dev/null
-			    if [[ $? != 0 ]]; then
-            echo "Please install curl before running this script use the command:"
-            echo "sudo apt install curl"
-            exit 0
-          fi
-			fi
+else
+	apt list curl | grep installed &>/dev/null
+	if [[ $? != 0 ]]; then
+        	echo "Please install curl before running this script use the command:"
+		echo "sudo apt install curl"
+		exit 0
+	fi
+fi
 
 # Set static variables
 wallet=$(cd ${pangaea_path}; LD_LIBRARY_PATH=. ./wallet.sh -t list | grep account | awk '{print $2}'); # Set home folder as default install path (cd ~)
