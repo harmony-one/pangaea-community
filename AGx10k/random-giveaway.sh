@@ -59,7 +59,7 @@ do
         amount=$amount_base$(($RANDOM + 1))
 
 	echo "will send $amount tokens to $recipient with this command:"
-        echo "./wallet.sh -t transfer -from $wallet -to $recipient -shardID $shardid -amount $amount -pass pass:"
-        ./wallet.sh -t transfer -from $wallet -to $recipient -shardID $shardid -amount $amount -pass pass:
+        echo "./wallet.sh -t transfer --from $wallet --to $recipient --shardID $shardid --toShardID $shardid --amount $amount --pass pass:"
+        ./wallet.sh -t transfer --from $wallet --to $recipient --shardID $shardid --toShardID $shardid --amount $amount --pass pass:
         (cd ${HARMONY_ROOT}; LD_LIBRARY_PATH=. ./wallet -p pangaea balances);
 done
