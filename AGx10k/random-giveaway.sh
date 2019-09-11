@@ -2,7 +2,15 @@
 #### this script will constantly pick random online node from your shard and send a random amount
 
 #### place where are your harmony files reside. /root by default
-HARMONY_ROOT="/root"
+settings_HARMONY_ROOT="/root"
+
+###
+if [ -z ${HARMONY_ROOT+x} ]; then
+        HARMONY_ROOT="${settings_HARMONY_ROOT}"
+else
+        echo "HARMONY_ROOT was set outside this script=${HARMONY_ROOT}";
+fi
+
 #### left part of sending amount. result will be LEFT_string+Right_sring like 0.0125 0.014805 0.0111 etc
 #### intentionally left very small by default to prevent spending all tokens
 amount_base="0.01"

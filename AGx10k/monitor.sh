@@ -10,8 +10,15 @@
 ##### mon
 #####
 
-#### where your harmony node is located. by default = /root
-HARMONY_ROOT="/root"
+#### place where are your harmony files reside. /root by default
+settings_HARMONY_ROOT="/root"
+
+###
+if [ -z ${HARMONY_ROOT+x} ]; then
+        HARMONY_ROOT="${settings_HARMONY_ROOT}"
+else
+        echo "HARMONY_ROOT was set outside this script=${HARMONY_ROOT}";
+fi
 
 command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; echo >&2 "try apt-get install jq."; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "I require curl but it's not installed.  Aborting."; echo >&2 "try apt-get install curl."; exit 1; }
@@ -44,10 +51,16 @@ then
 	#### get wallet/shard status from https://harmony.one/pga/network
 	wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | awk '{print $2}');
 	pga_out=$(curl -s https://harmony.one/pga/network.json);
-	if jq -e . >/dev/null 2>&1 <<<"$pga_out"; then
+        if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
 		echo -e "\033[33mhttps://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status\033[0m"
 	else
 		shardstatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".status')
+		shardstatus_time=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".last_updated')
+		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
+		if [ $shardstatus_ago -gt 1800 ] ; then
+		        echo -e "\033[33mstatus page was updated more than 30m ago = ${shardstatus_ago}s\033[0m"
+
+		fi
 		nodestatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".nodes.online | index("'$wallet'")')
 		case "x$shardstatus" in
 			xonline)
