@@ -31,11 +31,20 @@ chmod +x send_tx.sh
 
 ## Usage
 
-1. Create new tmux session: tmux new -s pangaea_phaseII
-2. Run ./send_tx.sh
-3. Press: CTRL + B release and Press D
+1. Create new tmux session
+```sh
+tmux new -s pangaea_phaseII
+```
+2. Run the script
+```sh
+./send_tx.sh
+```
+3. Detach from tmux
+```sh
+Press: CTRL + B release and Press D
+```
 
-# you can adjust the following:
+### you can adjust the following:
 * base ammount to send (0.001 as default)
 * working directory (~ home as default)
 * desired time frame (10 seg as default)
