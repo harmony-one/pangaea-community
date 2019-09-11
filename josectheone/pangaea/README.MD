@@ -1,88 +1,11 @@
-Shell script to send Transactions in Harmony's Pangaea phase II, it sends TX's to random online nodes in a loop every 10 seg.
-<p>
-you need to adjust the following:
-- base ammount to send (0.001 as default)
-- working directory (~ home as default)
-- desired time frame (10 seg as default)
-<p>
-Steps to use this script:
-- Create new tmux session: tmux new -s pangaea_phaseII
-- exec: chmod +x send_tx.sh
-- exec: ./send_tx.sh
-- Press: CTRL + B release and Press D
-
-<!--
-*** Thanks for checking out this README Template. If you have a suggestion that would
-*** make this better, please fork the repo and create a pull request or simply open
-*** an issue with the tag "enhancement".
-*** Thanks again! Now go create something AMAZING! :D
-***
-***
-***
-*** To avoid retyping too much info. Do a search and replace for the following:
-*** github_username, repo, twitter_handle, email
--->
-
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-
-
-<h3 align="center">Random Transactions generator script</h3>
-
-  <p align="center">
-    Sends a transaction every N time (10 seg default) to random online nodes in the Harmony testnet (Pangaea)
-    <br />
-    <a href="https://github.com/josectheone/pangaea-community"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/josectheone/pangaea-community">View Demo</a>
-    ·
-    <a href="https://github.com/josectheone/pangaea-community/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/josectheone/pangaea-community/issues">Request Feature</a>
-  </p>
-</p>
-
-
-
-<!-- TABLE OF CONTENTS -->
-## Table of Contents
-
-* [About the Project](#about-the-project)
-  * [Built With](#built-with)
-* [Getting Started](#getting-started)
-  * [Prerequisites](#prerequisites)
-  * [Installation](#installation)
-* [Usage](#usage)
-* [Roadmap](#roadmap)
-* [Contributing](#contributing)
-* [License](#license)
-* [Contact](#contact)
-* [Acknowledgements](#acknowledgements)
-
-
-
-<!-- ABOUT THE PROJECT -->
 ## About The Project
 
 **Contribution to the community to easy the network testing process**
 
 ### Built With
 
-* [](shell)
+* SHELL
 
-<!-- GETTING STARTED -->
 ## Getting Started
 
 To get a local copy up and running follow these simple steps.
@@ -96,73 +19,23 @@ sudo apt install curl jq
 ```
 
 ### Installation
- 
-1. Clone the repo
+
+1. Download the script
 ```sh
-git clone https:://github.com/josectheone/pangaea-community.git
+wget https://raw.githubusercontent.com/josectheone/pangaea-community/master/josectheone/pangaea/send_tx.sh
 ```
-2. Install NPM packages
+2. Set execution flag
 ```sh
-npm install
+chmod +x send_tx.sh
 ```
 
-<!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+1. Create new tmux session: tmux new -s pangaea_phaseII
+2. Run ./send_tx.sh
+3. Press: CTRL + B release and Press D
 
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-See the [open issues](https://github.com/josectheone/pangaea-community/issues) for a list of proposed features (and known issues).
-
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-<!-- CONTACT -->
-## Contact
-
-Jose Carlos - [@josecthetwo](https://twitter.com/josecthetwo)
-
-Project Link: [https://github.com/josectheone/pangaea-community](https://github.com/josectheone/pangaea-community)
-
-<!-- ACKNOWLEDGEMENTS -->
-## Acknowledgements
-
-* [](AG)
-* []()
-* []()
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=flat-square
-[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=flat-square
-[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=flat-square
-[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=flat-square
-[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
-[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=flat-square
-[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/othneildrew
-[product-screenshot]: images/screenshot.png
+# you can adjust the following:
+* base ammount to send (0.001 as default)
+* working directory (~ home as default)
+* desired time frame (10 seg as default)
