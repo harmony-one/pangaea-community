@@ -109,12 +109,10 @@ if [ -z "$maximum_block_time_difference" ]; then
 fi
 
 if [ -z "$perform_formatting" ]; then
-  # Defaults to 1 hour since last bingo if nothing else is specified
   perform_formatting=true
 fi
 
 if [ -z "$debug" ]; then
-  # Defaults to 1 hour since last bingo if nothing else is specified
   debug=false
 fi
 
