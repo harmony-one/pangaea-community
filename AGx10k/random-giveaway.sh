@@ -37,7 +37,7 @@ cd ${HARMONY_ROOT}
 wallet=$(cd ${HARMONY_ROOT}; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | cut -c10-51);
 echo my wallet=$wallet
 
-shardid=$(tac latest/*.log | grep -Eom1 "\"shardID\"\:[0-9]+" | cut -c11-11);
+shardid=$(tac latest/*.log | grep -oam 1 -E "\"(myShardID|shardID)\":[0-3]" | grep -Eo "[0-3]");
 echo my shard=$shardid
 
 while true

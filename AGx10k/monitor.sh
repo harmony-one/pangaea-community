@@ -43,11 +43,11 @@ then
 	if ! ls latest/*.log 1> /dev/null 2>&1; then
 		echo -e "\033[31mthere are no \"latest/*.log\" files found. Can not determine my shard!\033[0m"
 	else
-		_shardid=$(tac latest/*.log | grep -oam 1 -E "\"([Ss]hardID)\":[0-3]"  | awk -F: '{print $2}');
+		_shardid=$(tac latest/*.log | grep -oam 1 -E "\"(myShardID|shardID)\":[0-3]" | grep -Eo "[0-3]");
 		case $_shardid in
 			''|*[!0-9]*)
 				echo -e "\033[33mCan not determine my shard with \"grep -Eom1\"\033[0m"
-				grep -E "\"shardID\"\:[0-9]+" latest/*.log
+				grep -oam 10 --color -E "\"(myShardID|shardID)\":[0-3]" latest/*.log
 			;;
 			*)
 				shardid=$_shardid
