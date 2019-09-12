@@ -40,14 +40,14 @@ then
 
 	#### my shard id
 	shardid="UNDEFINED"
-	if [ ! -f latest/validator*.log ]; then
-		echo -e "\033[31mthere are no \"latest/validator*.log\" files found. Can not determine my shard!\033[0m"
+	if ! ls latest/*.log 1> /dev/null 2>&1; then
+		echo -e "\033[31mthere are no \"latest/*.log\" files found. Can not determine my shard!\033[0m"
 	else
-		_shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
+		_shardid=$(tac latest/*.log | grep -oam 1 -E "\"([Ss]hardID)\":[0-3]"  | awk -F: '{print $2}');
 		case $_shardid in
 			''|*[!0-9]*)
 				echo -e "\033[33mCan not determine my shard with \"grep -Eom1\"\033[0m"
-				grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log
+				grep -E "\"shardID\"\:[0-9]+" latest/*.log
 			;;
 			*)
 				shardid=$_shardid
