@@ -43,12 +43,14 @@ then
 	if [ ! -f latest/validator*.log ]; then
 		echo -e "\033[31mthere are no \"latest/validator*.log\" files found. Can not determine my shard!\033[0m"
 	else
-		shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
-		case $shardid in
+		_shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
+		case $_shardid in
 			''|*[!0-9]*)
-				echo -e "\033[33mCan not determine my shard; shardid=\"$shardid\"\033[0m"
+				echo -e "\033[33mCan not determine my shard with \"grep -Eom1\"\033[0m"
+				grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log
 			;;
 			*)
+				shardid=$_shardid
 				echo my shard is $shardid
 			;;
 		esac
@@ -65,7 +67,7 @@ then
 	if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
 		echo -e "\033[33mhttps://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status\033[0m"
 	elif [[ "x$shardid" = "xUNDEFINED" ]] ; then
-		echo -e "\033[31m shardid is not defined - will not check wallet/shard status"
+		echo -e "\033[31mshardid is not defined - will not check wallet/shard status\033[0m"
 	else
 		shardstatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".status')
 		shardstatus_time=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".last_updated')
