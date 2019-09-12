@@ -2,7 +2,7 @@
 # Author: Jose Carlos
 # Contact Telegram: @josectheone
 # Credits to "AG" for sharing the base script
-# Version 1.3
+# Version 1.3.1
 
 # User specific values here
 pangaea_path=~; # Home folder by default
@@ -27,7 +27,7 @@ fi
 
 # Set static variables
 wallet=$(cd ${pangaea_path}; LD_LIBRARY_PATH=. ./wallet.sh -t list | grep account | awk '{print $2}'); # Set home folder as default install path (cd ~)
-shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}'); # Defines the shard to use
+shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/zerolog*.log | awk -F: '{print $2}'); # Defines the shard to use
 amount=$amount_base$(($RANDOM + 1)); # Defines the base ammount to send in every TX
 
 # Main loop starts here
