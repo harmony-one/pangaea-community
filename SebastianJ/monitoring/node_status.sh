@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1"
+version="0.1.2"
 
 # Author: Sebastian Johnsson - https://github.com/SebastianJ
 #
@@ -26,11 +26,12 @@ Options:
    -t           use the Pangaea network
    -m           use the Mainnet network
    -f           disable color and text formatting
+   -z           enable debug mode
    -h           print this help
 EOT
 }
 
-while getopts "n:w:i:c:s:dtmfh" opt; do
+while getopts "n:w:i:c:s:dtmfzh" opt; do
   case ${opt} in
     n)
       node_path="${OPTARG%/}"
@@ -64,6 +65,9 @@ while getopts "n:w:i:c:s:dtmfh" opt; do
       ;;
     f)
       perform_formatting=false
+      ;;
+    z)
+      debug=true
       ;;
     h|*)
       usage
@@ -105,8 +109,11 @@ if [ -z "$maximum_block_time_difference" ]; then
 fi
 
 if [ -z "$perform_formatting" ]; then
-  # Defaults to 1 hour since last bingo if nothing else is specified
   perform_formatting=true
+fi
+
+if [ -z "$debug" ]; then
+  debug=false
 fi
 
 temp_dir="node_status"
@@ -515,6 +522,12 @@ identify_base16_address() {
 check_bls_keyfile_status() {
   download_file "https://bit.ly" "pga-keys"
   bls_public_key=$(cat ${temp_dir}/pga-keys | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
+  
+  if [ -z "$bls_public_key" ]; then
+    # Occasionally the script can't download the key file, fallback to using the github url
+    download_file "https://raw.githubusercontent.com/harmony-one/harmony/master/internal/genesis" "foundational_pangaea.go"
+    bls_public_key=$(cat ${temp_dir}/foundational_pangaea.go | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
+  fi
 }
 
 run_wallet_command() {
@@ -529,7 +542,12 @@ download_file() {
   mkdir -p $temp_dir
   rm -rf "${temp_dir}/${2}"
   full_url="${1%/}/${2}"
-  wget -q $full_url --directory-prefix=$temp_dir
+  
+  if [ "$debug" = true ]; then
+    echo "Downloading ${full_url} to ${temp_dir}/${2}"
+  fi
+  
+  wget -q -O "${temp_dir}/${2}" $full_url
 }
 
 setup() {
@@ -537,7 +555,9 @@ setup() {
 }
 
 cleanup() {
-  rm -rf $temp_dir
+  if [ "$debug" = false ]; then
+    rm -rf $temp_dir
+  fi
 }
 
 # 
