@@ -39,9 +39,20 @@ then
 	tac latest/zero*.log | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*";
 
 	#### my shard id
-	shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
-	echo my shard is $shardid
-
+    shardid="UNDEFINED"
+    if [ ! -f latest/validator*.log ]; then
+        echo -e "\033[31mthere are no \"latest/validator*.log\" files found. Can not determine my shard!\033[0m"
+    else
+        shardid=$(grep -Eom1 "\"shardID\"\:[0-9]+" latest/validator*.log | awk -F: '{print $2}');
+        case $shardid in
+            ''|*[!0-9]*)
+                echo -e "\033[33mCan not determine my shard; shardid=\"$shardid\"\033[0m"
+            ;;
+            *)
+                echo my shard is $shardid
+            ;;
+        esac
+    fi
 	#### how much MB is harmony db
 	du -shc harmony_db*;
 
@@ -51,15 +62,16 @@ then
 	#### get wallet/shard status from https://harmony.one/pga/network
 	wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | awk '{print $2}');
 	pga_out=$(curl -s https://harmony.one/pga/network.json);
-        if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
+    if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
 		echo -e "\033[33mhttps://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status\033[0m"
+	elif [[ "x$shardid" = "xUNDEFINED" ]] ; then
+        echo -e "\033[31m shardid is not defined - will not check wallet/shard status"
 	else
 		shardstatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".status')
 		shardstatus_time=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".last_updated')
 		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
 		if [ $shardstatus_ago -gt 1800 ] ; then
-		        echo -e "\033[33mstatus page was updated more than 30m ago = ${shardstatus_ago}s\033[0m"
-
+	        echo -e "\033[33mstatus page was updated more than 30m ago = ${shardstatus_ago}s\033[0m"
 		fi
 		nodestatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".nodes.online | index("'$wallet'")')
 		case "x$shardstatus" in
