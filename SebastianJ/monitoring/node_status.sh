@@ -1,13 +1,15 @@
 #!/bin/bash
 
-# Harmony Mainnet/Pangaea Node Status
-version="0.1.2"
-
 # Author: Sebastian Johnsson - https://github.com/SebastianJ
 #
 # Contributors:
 # Script/binaries last modified date: Sophoah - https://github.com/sophoah
 #
+
+# Harmony Mainnet/Pangaea Node Status
+version="0.1.3"
+script_name="node_status.sh"
+script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
 # Default to the Pangaea network for now:
 network_switch=" -t"
@@ -26,12 +28,13 @@ Options:
    -t           use the Pangaea network
    -m           use the Mainnet network
    -f           disable color and text formatting
+   -y           disable version checking
    -z           enable debug mode
    -h           print this help
 EOT
 }
 
-while getopts "n:w:i:c:s:dtmfzh" opt; do
+while getopts "n:w:i:c:s:dtmfyzh" opt; do
   case ${opt} in
     n)
       node_path="${OPTARG%/}"
@@ -65,6 +68,9 @@ while getopts "n:w:i:c:s:dtmfzh" opt; do
       ;;
     f)
       perform_formatting=false
+      ;;
+    y)
+      disable_version_checking=true
       ;;
     z)
       debug=true
@@ -116,6 +122,10 @@ if [ -z "$debug" ]; then
   debug=false
 fi
 
+if [ -z "$disable_version_checking" ]; then
+  disable_version_checking=false
+fi
+
 temp_dir="node_status"
 
 #
@@ -142,6 +152,23 @@ fi
 #
 # Check functions
 #
+
+check_version() {
+  if [ "$disable_version_checking" = false ]; then
+    parse_current_script_version
+  
+    if [ ! "$version" = "$latest_script_version" ]; then
+      echo "${yellow_text}${bold_text}"
+      echo "You're running an old version of ${script_name}! Latest available version is ${latest_script_version} and you're running version ${version}"
+      echo "Please upgrade your script using the following command:"
+      echo
+      echo "sudo rm -rf ${script_name} && wget -q ${script_url} && sudo chmod u+x ${script_name}"
+      echo "${normal_text}"
+      exit 1
+    fi
+  fi
+}
+
 check_for_correct_installation() {
   output_header "${header_index}. Installation - checking that your installation is correct"
   ((header_index++))
@@ -421,6 +448,21 @@ check_sync_consensus_status() {
   output_footer
 }
 
+check_transactions() {
+  output_header "${header_index}. Transactions - checking transaction info for your node"
+  ((header_index++))
+  
+  parse_pending_transactions
+  
+  if [ -z "$pending_transactions" ]; then
+    error_message "Couldn't parse pending transactions from your zerolog!"
+  else
+    success_message "You have a total of ${pending_transactions} pending transactions"
+  fi
+  
+  output_footer
+}
+
 check_wallet_balances() {
   output_header "${header_index}. Wallet - checking wallet balances for your node"
   ((header_index++))
@@ -467,6 +509,13 @@ parse_current_block() {
   current_block=$converted
 }
 
+parse_pending_transactions() {
+  parse_from_zerolog "pending_transactions"
+  pending_transactions=$parsed_zerolog_value
+  convert_to_integer "$pending_transactions"
+  pending_transactions=$converted
+}
+
 parse_from_zerolog() {
   if ls $node_path/latest/zerolog*.log 1> /dev/null 2>&1; then
     case $1 in
@@ -479,6 +528,9 @@ parse_from_zerolog() {
       ;;
     sync)
       parsed_zerolog_value=`tac ${node_path}/latest/zerolog*.log | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*" | grep -oam 1 -E "\"myBlock\":[0-9\"]*"`
+      ;;
+    pending_transactions)
+      parsed_zerolog_value=`tac ${node_path}/latest/zero*.log | grep -oam 1 -E "\"totalPending\":[0-9]+" | grep -oam 1 -E "[0-9]+"`
       ;;
     *)
       ;;
@@ -495,6 +547,13 @@ parse_shard_id() {
 parse_timestamp() {
   timestamp=$(date -d "${1}" +"%s")
   timestamp=$((10#$timestamp))
+}
+
+parse_current_script_version() {
+  mkdir -p $temp_dir
+  latest_script_file_name="latest_script.sh"
+  latest_script_version=`rm -rf ${latest_script_file_name} && wget -q -O "${temp_dir}/${latest_script_file_name}" $script_url && cat ${temp_dir}/${latest_script_file_name} | grep -oam 1 -E "version=\"[^\"]+\"" | sed "s/version=\"//" | sed "s/\"//"`
+  rm -rf "${temp_dir}/${latest_script_file_name}"
 }
 
 convert_to_integer() {
@@ -610,6 +669,8 @@ check_status() {
   setup
   output_banner
   
+  check_version
+  
   check_for_correct_installation
   check_wallet
   check_node
@@ -619,6 +680,7 @@ check_status() {
   fi
   
   check_sync_consensus_status
+  check_transactions
   check_wallet_balances
   
   cleanup
