@@ -7,7 +7,7 @@
 #
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1.3"
+version="0.1.4"
 script_name="node_status.sh"
 script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
@@ -287,17 +287,12 @@ check_node() {
     fi
   fi
   
-  if ls $node_path/latest/zerolog*.log 1> /dev/null 2>&1; then
-    parse_shard_id
-    
-    if [ -z "$shard" ]; then
-      error_message "Can't determine your shard id - can't parse your shard id from latest/zerolog*.log."
-      error_message "There might be network issues - please check https://t.me/harmonypangaea or the Discord #pangaea channel for network updates."
-    else
-      success_message "Detected shard: ${bold_text}${shard}${normal_text}"
-    fi
+  detect_shard_id
+  
+  if [ -z "$shard" ]; then
+    error_message "Can't determine your shard id - can't parse your shard id from your node directory."
   else
-    error_message "Can't determine your shard id - can't find $node_path/latest/zerolog*.log"
+    success_message "Detected shard: ${bold_text}${shard}${normal_text}"
   fi
   
   output_footer
@@ -362,8 +357,8 @@ check_network_status() {
       if [ "$shard_status" = "ONLINE" ]; then
         if [ "$node_running" = true ]; then
           error_message "Your node has been detected as running on your server but the Harmony Pangaea Network status page (https://harmony.one/pga/network) reports you as OFFLINE."
-          error_message "If this issue continues after the next network status update (usually happens within the next 15-30 minutes) there might be a misconfigured or erronous internal node running your address."
-          error_message "Please report your address ${address} to the support representatives on https://t.me/harmonypangaea or in the Discord #pangaea channel."
+          warning_message "If this issue continues after the next network status update (usually happens within the next 15-30 minutes) there might be a misconfigured or erronous internal node running your address."
+          warning_message "Please report your address ${address} to the support representatives on https://t.me/harmonypangaea or in the Discord #pangaea channel."
         else
           error_message "There's no node running on your server and Harmony's Network status page has reported you as OFFLINE."
           error_message "Please start your node as soon as possible: cd ${node_path}; ./node.sh${network_switch} (don't forget to run the command in tmux if you're using tmux)"
@@ -416,7 +411,7 @@ check_sync_consensus_status() {
   
   if [ -z "$current_bingo" ]; then
     error_message "Bingo status: couldn't find any recent bingos!"
-    error_message "There might be network issues - please check https://t.me/harmonypangaea or the Discord #pangaea channel for network updates."
+    warning_message "There might be network issues - please check https://t.me/harmonypangaea or the Discord #pangaea channel for network updates."
   else
     
     if [ "$bingo_date_parsed" = true ]; then
@@ -503,7 +498,7 @@ parse_sync_status() {
 }
 
 parse_current_block() {
-  parse_from_zerolog "block"
+  parse_from_zerolog "block" "$shard"
   current_block=$parsed_zerolog_value
   convert_to_integer "$current_block"
   current_block=$converted
@@ -524,7 +519,11 @@ parse_from_zerolog() {
       secondary_parsed_zerolog_value=`echo ${parsed_zerolog_value} | sed "s/\..*//" | sed -e 's/T/ /g'`
       ;;
     block)
-      parsed_zerolog_value=`tac ${node_path}/latest/zerolog*.log | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*" | grep -oam 1 -E "[0-9]+"`
+      if [ -z "$2" ]; then
+        parsed_zerolog_value=`tac ${node_path}/latest/zerolog*.log | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*" | grep -oam 1 -E "[0-9]+"`
+      else
+        parsed_zerolog_value=`tac ${node_path}/latest/zerolog*.log | grep -E "\"(blockShard)\":${2}" | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*" | grep -oam 1 -E "[0-9]+"`
+      fi
       ;;
     sync)
       parsed_zerolog_value=`tac ${node_path}/latest/zerolog*.log | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*" | grep -oam 1 -E "\"myBlock\":[0-9\"]*"`
@@ -542,6 +541,23 @@ parse_from_zerolog() {
 
 parse_shard_id() {
   shard=`tac $node_path/latest/*.log | grep -oam 1 -E "\"([Ss]hardID)\":[0-3]" | grep -oam 1 -E "([0-3]+)"`
+}
+
+detect_shard_id() {
+  possible_shard_ids=($(ls -d ${node_path}/harmony_db_* | sed "s|${node_path}/harmony_db_||g"))
+  
+  for possible_shard in "${possible_shard_ids[@]}"
+  do
+    convert_to_integer "$possible_shard"
+    
+    if [ -z "$shard" ]; then
+      shard=$converted
+    else
+      if (( converted > shard )); then
+        shard=$converted
+      fi
+    fi
+  done
 }
 
 parse_timestamp() {
@@ -624,6 +640,10 @@ cleanup() {
 #
 success_message() {
   echo ${green_text}${1}${normal_text}
+}
+
+warning_message() {
+  echo ${yellow_text}${1}${normal_text}
 }
 
 error_message() {
