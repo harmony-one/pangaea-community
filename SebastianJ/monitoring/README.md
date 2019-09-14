@@ -26,7 +26,7 @@ The only requirement is that wget is installed (which it typically is). The rest
 
 ### Installation & Setup
 
-`sudo rm -rf node_status.sh && wget -q https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh && sudo chmod u+x node_status.sh`
+`sudo rm -rf node_status.sh && sudo wget -q https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh && sudo chmod u+x node_status.sh`
 
 ### Running the script
 
