@@ -39,15 +39,15 @@ then
 	tac latest/zero*.log | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*";
 
 	#### my shard id
-	shardid="UNDEFINED"
-	if ! ls latest/*.log 1> /dev/null 2>&1; then
-		echo -e "\033[31mthere are no \"latest/*.log\" files found. Can not determine my shard!\033[0m"
+	shardid=""
+	if ! ls -d $HARMONY_ROOT/harmony_db_* 1> /dev/null 2>&1; then
+		echo -e "\033[31mthere are no \"$HARMONY_ROOT/harmony_db_*\" directories found. Can not determine my shard!\033[0m"
 	else
-		_shardid=$(tac latest/*.log | grep -oam 1 -E "\"(myShardID|shardID)\":[0-3]" | grep -Eo "[0-3]");
+		_shardid=$(cd $HARMONY_ROOT/; ls -d harmony_db_* | tail -1 | cut -c12-)
 		case $_shardid in
 			''|*[!0-9]*)
-				echo -e "\033[33mCan not determine my shard with \"grep -Eom1\"\033[0m"
-				grep -oam 10 --color -E "\"(myShardID|shardID)\":[0-3]" latest/*.log
+				echo -e "\033[33mCan not determine my shard with \"ls -d harmony_db_*\"\033[0m"
+				cd $HARMONY_ROOT/; ls -d harmony_db_*
 			;;
 			*)
 				shardid=$_shardid
@@ -62,11 +62,11 @@ then
 	(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea balances);
 
 	#### get wallet/shard status from https://harmony.one/pga/network
-	wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | awk '{print $2}');
+	wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | cut -c10- );
 	pga_out=$(curl -s https://harmony.one/pga/network.json);
 	if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
 		echo -e "\033[33mhttps://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status\033[0m"
-	elif [[ "x$shardid" = "xUNDEFINED" ]] ; then
+	elif [ -z "$shardid" ] ; then
 		echo -e "\033[31mshardid is not defined - will not check wallet/shard status\033[0m"
 	else
 		shardstatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".status')
