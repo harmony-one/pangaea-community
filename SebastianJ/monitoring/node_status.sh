@@ -162,7 +162,7 @@ check_version() {
       echo "You're running an old version of ${script_name}! Latest available version is ${latest_script_version} and you're running version ${version}"
       echo "Please upgrade your script using the following command:"
       echo
-      echo "sudo rm -rf ${script_name} && wget -q ${script_url} && sudo chmod u+x ${script_name}"
+      echo "sudo rm -rf ${script_name} && sudo wget -q ${script_url} && sudo chmod u+x ${script_name}"
       echo "${normal_text}"
       exit 1
     fi
