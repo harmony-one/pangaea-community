@@ -35,9 +35,6 @@ if pgrep -fa "./harmony " > /dev/null;
 then
 	echo ./harmony started:  $(ps -C harmony -o etime --no-headers) ago;
 
-	#### latest block from log
-	tac latest/zero*.log | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*";
-
 	#### my shard id
 	shardid=""
 	if ! ls -d $HARMONY_ROOT/harmony_db_* 1> /dev/null 2>&1; then
@@ -51,7 +48,11 @@ then
 			;;
 			*)
 				shardid=$_shardid
-				echo my shard is $shardid
+				echo shard = $shardid
+				#### latest block from log
+				block=$(tac latest/zerolog*.log | grep -E "\"(blockShard)\":$shardid" | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*" | grep -oam 1 -E "[0-9]+" )
+				echo block = $block
+
 			;;
 		esac
 	fi
