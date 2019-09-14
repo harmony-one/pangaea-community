@@ -7,7 +7,7 @@
 #
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1.5"
+version="0.1.6"
 script_name="node_status.sh"
 script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
@@ -452,7 +452,7 @@ check_transactions() {
   if [ -z "$pending_transactions" ]; then
     error_message "Couldn't parse pending transactions from your zerolog!"
   else
-    success_message "You have a total of ${pending_transactions} pending transactions"
+    success_message "Your node has a total of ${pending_transactions} pending transactions"
   fi
   
   output_footer
@@ -544,7 +544,7 @@ parse_shard_id() {
 }
 
 detect_shard_id() {
-  possible_shard_ids=($(ls -d ${node_path}/harmony_db_* | sed "s|${node_path}/harmony_db_||g"))
+  possible_shard_ids=($(sudo ls -d ${node_path}/harmony_db_* | sed "s|${node_path}/harmony_db_||g"))
   
   for possible_shard in "${possible_shard_ids[@]}"
   do
