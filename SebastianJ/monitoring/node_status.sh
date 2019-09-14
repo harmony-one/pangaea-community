@@ -526,7 +526,7 @@ parse_from_zerolog() {
       fi
       ;;
     sync)
-      parsed_zerolog_value=`tac ${node_path}/latest/zerolog*.log | grep -E "isBeacon: false" | grep -oam 1 "Node is now IN SYNC!"`
+      parsed_zerolog_value=`tac ${node_path}/latest/zerolog*.log | grep -E "isBeacon: false" | grep -oaim 1 "Node is now IN SYNC!"`
       ;;
     pending_transactions)
       parsed_zerolog_value=`tac ${node_path}/latest/zero*.log | grep -oam 1 -E "\"totalPending\":[0-9]+" | grep -oam 1 -E "[0-9]+"`
