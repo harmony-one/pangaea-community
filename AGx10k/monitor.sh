@@ -23,6 +23,23 @@ fi
 command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; echo >&2 "try apt-get install jq."; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "I require curl but it's not installed.  Aborting."; echo >&2 "try apt-get install curl."; exit 1; }
 command -v pgrep >/dev/null 2>&1 || { echo >&2 "I require pgrep but it's not installed.  Aborting."; echo >&2 "try apt-get install procps."; exit 1; }
+if command -v tput >/dev/ull 2>&1; then
+	bold_text=$(tput bold)
+	normal_text=$(tput sgr0)
+	black_text=$(tput setaf 0)
+	red_text=$(tput setaf 1)
+	green_text=$(tput setaf 2)
+	yellow_text=$(tput setaf 3)
+else
+	bold_text=""
+	normal_text=""
+	black_text=""
+	red_text=""
+	green_text=""
+	yellow_text=""
+fi
+
+
 
 
 cd "${HARMONY_ROOT}"
@@ -38,12 +55,12 @@ then
 	#### my shard id
 	shardid=""
 	if ! ls -d $HARMONY_ROOT/harmony_db_* 1> /dev/null 2>&1; then
-		echo -e "\033[31mthere are no \"$HARMONY_ROOT/harmony_db_*\" directories found. Can not determine my shard!\033[0m"
+		echo -e "${red_text}there are no \"$HARMONY_ROOT/harmony_db_*\" directories found. Can not determine my shard!${normal_text}"
 	else
 		_shardid=$(cd $HARMONY_ROOT/; ls -d harmony_db_* | tail -1 | cut -c12-)
 		case $_shardid in
 			''|*[!0-9]*)
-				echo -e "\033[33mCan not determine my shard with \"ls -d harmony_db_*\"\033[0m"
+				echo -e "${yellow_text}Can not determine my shard with \"ls -d harmony_db_*\"${normal_text}"
 				cd $HARMONY_ROOT/; ls -d harmony_db_*
 			;;
 			*)
@@ -59,29 +76,26 @@ then
 	#### how much MB is harmony db
 	du -shc harmony_db*;
 
-	#### print wallet balances
-	(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea balances);
-
 	#### get wallet/shard status from https://harmony.one/pga/network
 	wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | cut -c10- );
 	pga_out=$(curl -s https://harmony.one/pga/network.json);
 	if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
-		echo -e "\033[33mhttps://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status\033[0m"
+		echo -e "${yellow_text}https://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status${normal_text}"
 	elif [ -z "$shardid" ] ; then
-		echo -e "\033[31mshardid is not defined - will not check wallet/shard status\033[0m"
+		echo -e "${red_text}shardid is not defined - will not check wallet/shard status${normal_text}"
 	else
 		shardstatus=$(jq -r '.shards."'$shardid'".status' <<< "${pga_out}")
 		shardstatus_time=$(jq -r '.shards."'$shardid'".last_updated' <<< "${pga_out}")
 		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
 		if [ $shardstatus_ago -gt 1800 ] ; then
-			echo -e "\033[33mstatus page was updated more than 30m ago = ${shardstatus_ago}s\033[0m"
+			echo -e "${yellow_text}status page was updated more than 30m ago = ${shardstatus_ago}s${normal_text}"
 		fi
 		nodestatus=$(jq -r '.shards."'$shardid'".nodes.online | index("'$wallet'")' <<< "${pga_out}")
 		case "x$shardstatus" in
 			xonline)
 				case $nodestatus in
 					null)					#### nodestatus is "null" when searching it in online list - it is offline
-						echo -e "${wallet} \033[31mOFFLINE\033[0m; shard $shardid ONLINE"
+						echo -e "${wallet} ${red_text}OFFLINE${normal_text}; shard $shardid ONLINE"
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
@@ -95,14 +109,14 @@ then
 			xoffline)
 				case $nodestatus in
 					null)					#### nodestatus is "null" when searching it in online list - it is offline
-						echo -e "${wallet} \033[33mOFFLINE\033[0m; shard $shardid \033[33mOFFLINE\033[0m"
+						echo -e "${wallet} ${yellow_text}OFFLINE${normal_text}; shard $shardid ${yellow_text}OFFLINE${normal_text}"
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
 						echo "shardstatus=\"$shardstatus\", nodestatus=\"$nodestatus\""
 					;;
 					*)						#### nodestatus is not null, not empty string, not not numbers - it is online
-						echo -e "wallet ${wallet} ONLINE and shard $shardid \033[33mOFFLINE\033[0m"
+						echo -e "wallet ${wallet} ONLINE and shard $shardid ${yellow_text}OFFLINE${normal_text}"
 					;;
 				esac
 			;;
@@ -116,12 +130,12 @@ then
 	#### BINGO
 	last_bingo_found=$(cd "${HARMONY_ROOT}"; tac latest/zero*.log | grep -am 1 "BINGO");
 	if [ $? -gt 0 ]; then
-		echo -e "\033[31mBINGO not found\033[0m\n"
+		echo -e "${red_text}BINGO not found${normal_text}\n"
 	else
 		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
 		if [ $last_bingo_ago -gt 100 ];
 		then
-			echo -e "last BINGO was found \033[33m$last_bingo_ago\033[0m seconds ago"
+			echo -e "last BINGO was found ${yellow_text}$last_bingo_ago${normal_text} seconds ago"
 		else
 			echo -e "last BINGO was found $last_bingo_ago seconds ago"
 		fi
@@ -130,19 +144,21 @@ then
 	#### SYNC STATUS
 	zerolog_SYNC_strings=$(cd "${HARMONY_ROOT}"; cat latest/zerolog*.log | grep -E "isBeacon: false" | grep SYNC)
 	if [ $? -gt 0 ]; then
-		echo -e "\033[31mcan not find \"isBeacon: false\"\033[0m";
+		echo -e "${red_text}can not find \"isBeacon: false\"${normal_text}";
 	else
 		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
 		if grep -q "Node is now IN SYNC!" <<< "$sync_status"; then
 			echo Node is in SYNC
 		elif grep -q "Node is Not in Sync" <<< "$sync_status"; then
-			echo -e "\033[31mnode is not in sync;\033[0m latest SYNC status=$sync_status";
+			echo -e "${red_text}node is not in sync;${normal_text} latest SYNC status=$sync_status";
 		else
-			echo -e "\033[33Node SYNC some unknown status=\033[0m$sync_status"
+			echo -e "\033[33Node SYNC some unknown status=${normal_text}$sync_status"
 		fi
 	fi
 
+	#### print wallet balances
+	(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea balances);
 	
 else
-	echo -e "\033[31m./harmony is not running!!!\033[0m"
+	echo -e "${red_text}./harmony is not running!!!${normal_text}"
 fi
