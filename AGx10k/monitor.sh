@@ -73,11 +73,17 @@ then
 			;;
 		esac
 	fi
-	#### how much MB is harmony db
-	du -shc harmony_db*;
 
+	#### WALLET
 	#### get wallet/shard status from https://harmony.one/pga/network
-	wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | cut -c10- );
+	balances_out=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea balances 2>&1 || exit 5 ) || { echo -e "${red_text}error getting balances${normal_text}"; echo "${balances_out}" exit 5; }
+	wallets_Addresses=$(grep Address <<< "$balances_out" || exit 5) || { echo -e "${red_text}Addresses not found in \"wallet balances\" output${normal_text}; ${balances}"; exit 5; }
+	number_of_wallets=$(grep Address <<< "$balances_out" | wc -l)
+	wallet=$(grep Address <<< "$balances_out" | head -n1 | cut -c14-)
+	if [ $number_of_wallets -gt 1 ]; then
+		echo -e "${yellow_text}found $number_of_wallets wallets${normal_text};will use first=$wallet"
+	fi
+
 	pga_out=$(curl -s https://harmony.one/pga/network.json);
 	if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
 		echo -e "${yellow_text}https://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status${normal_text}"
@@ -102,7 +108,7 @@ then
 						echo "shardstatus=\"$shardstatus\", nodestatus=\"$nodestatus\""
 					;;
 					*)						#### nodestatus is not null, not empty string, not not numbers - it is online
-						 echo -e "wallet ${wallet} ONLINE and shard is ONLINE"
+						 echo -e "wallet ${wallet} is ONLINE and shard is ONLINE"
 					;;
 				esac
 			;;
@@ -135,7 +141,7 @@ then
 		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
 		if [ $last_bingo_ago -gt 100 ];
 		then
-			echo -e "last BINGO was found ${yellow_text}$last_bingo_ago${normal_text} seconds ago"
+			echo -e "last BINGO was found ${yellow_text}$last_bingo_ago seconds ago${normal_text} - more than 100 seconds!"
 		else
 			echo -e "last BINGO was found $last_bingo_ago seconds ago"
 		fi
@@ -157,7 +163,10 @@ then
 	fi
 
 	#### print wallet balances
-	(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea balances);
+	echo "${balances_out}"
+
+	#### how much MB is harmony db
+	du -shc harmony_db*;
 	
 else
 	echo -e "${red_text}./harmony is not running!!!${normal_text}"
