@@ -147,11 +147,11 @@ then
 		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
 		if [ $last_bingo_ago -gt 300 ];
 		then
-			echo -e "last BINGO was found ${red_text}$last_bingo_ago seconds ago${normal_text} - more than 5 minutes!"
+			echo -e "last BINGO ${red_text}was found $last_bingo_ago seconds ago${normal_text} - more than 5 minutes!"
 		elif [ $last_bingo_ago -gt 60 ]; then
-			echo -e "last BINGO was found ${yellow_text}$last_bingo_ago seconds ago${normal_text} - more than 1 minute!"
+			echo -e "last BINGO ${yellow_text}was found $last_bingo_ago seconds ago${normal_text} - more than 1 minute!"
 		else
-			echo -e "last BINGO was found ${green_text}$last_bingo_ago${normal_text} seconds ago"
+			echo -e "last BINGO ${green_text}was found $last_bingo_ago${normal_text} seconds ago"
 		fi
 	fi
 
