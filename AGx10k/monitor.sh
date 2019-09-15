@@ -28,6 +28,7 @@ normal_text="\e[0m"
 red_text="\e[31m"
 green_text="\e[32m"
 yellow_text="\e[33m"
+NOT_found="${red_text}NOT found${normal_text}"
 
 
 cd "${HARMONY_ROOT}"
@@ -56,7 +57,11 @@ then
 				echo shard = $shardid
 				#### latest block from log
 				block=$(tac latest/zerolog*.log | grep -E "\"(blockShard)\":$shardid" | grep -oam 1 -E "\"(blockNumber|myBlock)\":[0-9\"]*" | grep -oam 1 -E "[0-9]+" )
-				echo block = $block
+				if [ -z "$block" ]; then
+					echo -e "BLOCK: ${NOT_found}"
+				else
+					echo BLOCK: $block
+				fi
 
 			;;
 		esac
@@ -127,23 +132,23 @@ then
 	#### BINGO
 	last_bingo_found=$(cd "${HARMONY_ROOT}"; tac latest/zero*.log | grep -am 1 "BINGO");
 	if [ $? -gt 0 ]; then
-		echo -e "${red_text}BINGO not found${normal_text}"
+		echo -e "BINGO: ${NOT_found}"
 	else
 		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
 		if [ $last_bingo_ago -gt 300 ];
 		then
-			echo -e "last BINGO ${red_text}was found $last_bingo_ago seconds ago${normal_text} - more than 5 minutes!"
+			echo -e "${red_text}BINGO: was found $last_bingo_ago seconds ago${normal_text} - more than 5 minutes!"
 		elif [ $last_bingo_ago -gt 60 ]; then
-			echo -e "last BINGO ${yellow_text}was found $last_bingo_ago seconds ago${normal_text} - more than 1 minute!"
+			echo -e "${yellow_text}BINGO: was found $last_bingo_ago seconds ago${normal_text} - more than 1 minute!"
 		else
-			echo -e "last BINGO ${green_text}was found $last_bingo_ago seconds ago${normal_text}"
+			echo -e "${green_text}BINGO: was found $last_bingo_ago seconds ago${normal_text}"
 		fi
 	fi
 
 	#### SYNC STATUS
 	zerolog_SYNC_strings=$(cd "${HARMONY_ROOT}"; cat latest/zerolog*.log | grep -E "isBeacon: false" | grep SYNC)
 	if [ $? -gt 0 ]; then
-		echo -e "SYNC: ${red_text}can not find \"isBeacon: false\"${normal_text}";
+		echo -e "SYNC: ${NOT_found}(${red_text}can not find \"isBeacon: false\" in zerolog*.log${normal_text})";
 	else
 		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
 		sync_status_ago=$(( $(date +"%s") - $(date --date=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.time') +%s) ))
