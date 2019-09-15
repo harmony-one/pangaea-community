@@ -106,7 +106,7 @@ then
 			xoffline)
 				case $nodestatus in
 					null)					#### nodestatus is "null" when searching it in online list - it is offline
-						echo -e "${wallet} ${yellow_text}OFFLINE${normal_text}; shard $shardid is ${yellow_text}OFFLINE${normal_text} ${shardstatus_text}"
+						echo -e "$wallet ${wallet} is ${yellow_text}OFFLINE${normal_text}; shard $shardid is ${yellow_text}OFFLINE${normal_text} ${shardstatus_text}"
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
