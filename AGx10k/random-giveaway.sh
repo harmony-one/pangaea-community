@@ -34,10 +34,10 @@ function get_pga_network_csv () {
 
 cd ${HARMONY_ROOT}
 
-wallet=$(cd ${HARMONY_ROOT}; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | cut -c10-51);
+wallet=$(cd "${HARMONY_ROOT}"; LD_LIBRARY_PATH=. ./wallet -p pangaea list | grep account | cut -c10-51 );
 echo my wallet=$wallet
 
-shardid=$(tac latest/*.log | grep -oam 1 -E "\"(myShardID|shardID)\":[0-3]" | grep -Eo "[0-3]");
+shardid=$(cd $HARMONY_ROOT/; ls -d harmony_db_* | tail -1 | cut -c12-);
 echo my shard=$shardid
 
 while true
