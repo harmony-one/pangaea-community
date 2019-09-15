@@ -151,7 +151,7 @@ then
 		elif [ $last_bingo_ago -gt 60 ]; then
 			echo -e "last BINGO ${yellow_text}was found $last_bingo_ago seconds ago${normal_text} - more than 1 minute!"
 		else
-			echo -e "last BINGO ${green_text}was found $last_bingo_ago${normal_text} seconds ago"
+			echo -e "last BINGO ${green_text}was found $last_bingo_ago seconds ago${normal_text}"
 		fi
 	fi
 
