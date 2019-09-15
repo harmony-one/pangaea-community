@@ -126,6 +126,23 @@ then
 			echo -e "last BINGO was found $last_bingo_ago seconds ago"
 		fi
 	fi
+
+	#### SYNC STATUS
+	zerolog_SYNC_strings=$(cd "${HARMONY_ROOT}"; cat latest/zerolog*.log | grep -E "isBeacon: false" | grep SYNC)
+	if [ $? -gt 0 ]; then
+		echo -e "\033[31mcan not find \"isBeacon: false\"\033[0m";
+	else
+		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
+		if grep -q "Node is now IN SYNC!" <<< "$sync_status"; then
+			echo Node is in SYNC
+		elif grep -q "Node is Not in Sync" <<< "$sync_status"; then
+			echo -e "\033[31mnode is not in sync;\033[0m latest SYNC status=$sync_status";
+		else
+			echo -e "\033[33Node SYNC some unknown status=\033[0m$sync_status"
+		fi
+	fi
+
+	
 else
 	echo -e "\033[31m./harmony is not running!!!\033[0m"
 fi
