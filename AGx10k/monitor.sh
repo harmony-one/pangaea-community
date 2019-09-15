@@ -82,7 +82,7 @@ then
 		shardstatus_time=$(jq -r '.shards."'$shardid'".last_updated' <<< "${pga_out}")
 		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
 		if [ $shardstatus_ago -gt 1800 ] ; then
-			echo -e "${yellow_text}status for shard ${shardid} was updated more than 30m ago = ${shardstatus_ago}s${normal_text}"
+			####echo -e "${yellow_text}status for shard ${shardid} was updated more than 30m ago = ${shardstatus_ago}s${normal_text}"
 			shardstatus_text="(${yellow_text}updated $shardstatus_ago seconds ago${normal_text})"
 		else
 			shardstatus_text="(updated $shardstatus_ago seconds ago)"
@@ -127,7 +127,7 @@ then
 	#### BINGO
 	last_bingo_found=$(cd "${HARMONY_ROOT}"; tac latest/zero*.log | grep -am 1 "BINGO");
 	if [ $? -gt 0 ]; then
-		echo -e "${red_text}BINGO not found${normal_text}\n"
+		echo -e "${red_text}BINGO not found${normal_text}"
 	else
 		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
 		if [ $last_bingo_ago -gt 300 ];
@@ -148,14 +148,16 @@ then
 		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
 		sync_status_ago=$(( $(date +"%s") - $(date --date=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.time') +%s) ))
 		if [ $sync_status_ago -gt 300 ]; then
-			echo -e "${yellow_text}SYNC status is found $sync_status_ago seconds ago = older than 5 minutes${normal_text}"
+			sync_status_text=" (${yellow_text}SYNC is found $sync_status_ago seconds ago = older than 5 minutes${normal_text})"
+		else
+			sync_status_text=""
 		fi
 		if grep -q "Node is now IN SYNC!" <<< "$sync_status"; then
-			echo -e "Node is in ${green_text}SYNC${normal_text}"
+			echo -e "Node is in ${green_text}SYNC${normal_text}${sync_status_text}"
 		elif grep -q "Node is Not in Sync" <<< "$sync_status"; then
-			echo -e "Node is ${red_text}not in sync;${normal_text} latest SYNC status=\"${sync_status}\"";
+			echo -e "Node is ${red_text}NOT in sync;${normal_text}${sync_status_text} latest SYNC status=\"${sync_status}\"";
 		else
-			echo -e "${yellow_text}Node SYNC has unknown status=${normal_text}\"${sync_status}\""
+			echo -e "${yellow_text}Node SYNC${sync_status_text} has unknown status=${normal_text}\"${sync_status}\""
 		fi
 	fi
 
