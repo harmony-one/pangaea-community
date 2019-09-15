@@ -70,13 +70,13 @@ then
 	elif [ -z "$shardid" ] ; then
 		echo -e "\033[31mshardid is not defined - will not check wallet/shard status\033[0m"
 	else
-		shardstatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".status')
-		shardstatus_time=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".last_updated')
+		shardstatus=$(jq -r '.shards."'$shardid'".status' <<< "${pga_out}")
+		shardstatus_time=$(jq -r '.shards."'$shardid'".last_updated' <<< "${pga_out}")
 		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
 		if [ $shardstatus_ago -gt 1800 ] ; then
 			echo -e "\033[33mstatus page was updated more than 30m ago = ${shardstatus_ago}s\033[0m"
 		fi
-		nodestatus=$(echo "${pga_out}" | jq -r '.shards."'$shardid'".nodes.online | index("'$wallet'")')
+		nodestatus=$(jq -r '.shards."'$shardid'".nodes.online | index("'$wallet'")' <<< "${pga_out}")
 		case "x$shardstatus" in
 			xonline)
 				case $nodestatus in
@@ -118,7 +118,7 @@ then
 	if [ $? -gt 0 ]; then
 		echo -e "\033[31mBINGO not found\033[0m\n"
 	else
-		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(echo "$last_bingo_found" | jq -r '.time') +%s) ))
+		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
 		if [ $last_bingo_ago -gt 100 ];
 		then
 			echo -e "last BINGO was found \033[33m$last_bingo_ago\033[0m seconds ago"
