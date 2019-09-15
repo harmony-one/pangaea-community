@@ -143,7 +143,7 @@ then
 	#### SYNC STATUS
 	zerolog_SYNC_strings=$(cd "${HARMONY_ROOT}"; cat latest/zerolog*.log | grep -E "isBeacon: false" | grep SYNC)
 	if [ $? -gt 0 ]; then
-		echo -e "${red_text}can not find \"isBeacon: false\"${normal_text}";
+		echo -e "SYNC: ${red_text}can not find \"isBeacon: false\"${normal_text}";
 	else
 		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
 		sync_status_ago=$(( $(date +"%s") - $(date --date=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.time') +%s) ))
