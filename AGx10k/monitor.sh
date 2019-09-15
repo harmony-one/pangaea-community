@@ -24,7 +24,7 @@ command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed
 command -v curl >/dev/null 2>&1 || { echo >&2 "I require curl but it's not installed.  Aborting."; echo >&2 "try apt-get install curl."; exit 1; }
 command -v pgrep >/dev/null 2>&1 || { echo >&2 "I require pgrep but it's not installed.  Aborting."; echo >&2 "try apt-get install procps."; exit 1; }
 #### colors
-normal_text="\e[39m"
+normal_text="\e[0m"
 red_text="\e[31m"
 green_text="\e[32m"
 yellow_text="\e[33m"
