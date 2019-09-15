@@ -97,7 +97,7 @@ then
 		shardstatus_time=$(jq -r '.shards."'$shardid'".last_updated' <<< "${pga_out}")
 		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
 		if [ $shardstatus_ago -gt 1800 ] ; then
-			echo -e "${yellow_text}status page was updated more than 30m ago = ${shardstatus_ago}s${normal_text}"
+			echo -e "${yellow_text}status for shard ${shardid} was updated more than 30m ago = ${shardstatus_ago}s${normal_text}"
 			shardstatus_text="(${yellow_text}updated $shardstatus_ago seconds ago${normal_text})"
 		else
 			shardstatus_text="(updated $shardstatus_ago seconds ago)"
@@ -163,7 +163,7 @@ then
 		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
 		sync_status_ago=$(( $(date +"%s") - $(date --date=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.time') +%s) ))
 		if [ $sync_status_ago -gt 300 ]; then
-			echo -e "${yellow_text} SYNC status is found $sync_status_ago seconds ago = older than 5 minutes${normal_text}"
+			echo -e "${yellow_text}SYNC status is found $sync_status_ago seconds ago = older than 5 minutes${normal_text}"
 		fi
 		if grep -q "Node is now IN SYNC!" <<< "$sync_status"; then
 			echo -e "Node is in ${green_text}SYNC${normal_text}"
