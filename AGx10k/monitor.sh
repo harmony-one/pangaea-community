@@ -30,6 +30,9 @@ if command -v tput >/dev/ull 2>&1; then
 	red_text=$(tput setaf 1)
 	green_text=$(tput setaf 2)
 	yellow_text=$(tput setaf 3)
+
+	### fix colors for bash -x debugging
+	echo -e "${normal_text}"
 else
 	bold_text=""
 	normal_text=""
@@ -95,34 +98,37 @@ then
 		shardstatus_ago=$(( $(date +"%s") - $(date --date="$shardstatus_time" +%s) ))
 		if [ $shardstatus_ago -gt 1800 ] ; then
 			echo -e "${yellow_text}status page was updated more than 30m ago = ${shardstatus_ago}s${normal_text}"
+			shardstatus_text="(${yellow_text}updated $shardstatus_ago seconds ago${normal_text})"
+		else
+			shardstatus_text="(updated $shardstatus_ago seconds ago)"
 		fi
 		nodestatus=$(jq -r '.shards."'$shardid'".nodes.online | index("'$wallet'")' <<< "${pga_out}")
 		case "x$shardstatus" in
 			xonline)
 				case $nodestatus in
 					null)					#### nodestatus is "null" when searching it in online list - it is offline
-						echo -e "${wallet} ${red_text}OFFLINE${normal_text}; shard $shardid ONLINE"
+						echo -e "wallet ${wallet} is ${red_text}OFFLINE${normal_text}; shard $shardid is ${green_text}ONLINE${normal_text} ${shardstatus_text}"
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
 						echo "shardstatus=\"$shardstatus\", nodestatus=\"$nodestatus\""
 					;;
 					*)						#### nodestatus is not null, not empty string, not not numbers - it is online
-						 echo -e "wallet ${wallet} is ONLINE and shard is ONLINE"
+						 echo -e "wallet ${wallet} is ${green_text}ONLINE${normal_text}; shard $shardid is ${green_text}ONLINE${normal_text} ${shardstatus_text}"
 					;;
 				esac
 			;;
 			xoffline)
 				case $nodestatus in
 					null)					#### nodestatus is "null" when searching it in online list - it is offline
-						echo -e "${wallet} ${yellow_text}OFFLINE${normal_text}; shard $shardid ${yellow_text}OFFLINE${normal_text}"
+						echo -e "${wallet} ${yellow_text}OFFLINE${normal_text}; shard $shardid is ${yellow_text}OFFLINE${normal_text} ${shardstatus_text}"
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
 						echo "shardstatus=\"$shardstatus\", nodestatus=\"$nodestatus\""
 					;;
 					*)						#### nodestatus is not null, not empty string, not not numbers - it is online
-						echo -e "wallet ${wallet} ONLINE and shard $shardid ${yellow_text}OFFLINE${normal_text}"
+						echo -e "wallet ${wallet} is ${green_text}ONLINE${normal_text}; shard $shardid is ${yellow_text}OFFLINE${normal_text} ${shardstatus_text}"
 					;;
 				esac
 			;;
@@ -139,11 +145,13 @@ then
 		echo -e "${red_text}BINGO not found${normal_text}\n"
 	else
 		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
-		if [ $last_bingo_ago -gt 100 ];
+		if [ $last_bingo_ago -gt 300 ];
 		then
-			echo -e "last BINGO was found ${yellow_text}$last_bingo_ago seconds ago${normal_text} - more than 100 seconds!"
+			echo -e "last BINGO was found ${red_text}$last_bingo_ago seconds ago${normal_text} - more than 5 minutes!"
+		elif [ $last_bingo_ago -gt 60 ]; then
+			echo -e "last BINGO was found ${yellow_text}$last_bingo_ago seconds ago${normal_text} - more than 1 minute!"
 		else
-			echo -e "last BINGO was found $last_bingo_ago seconds ago"
+			echo -e "last BINGO was found ${green_text}$last_bingo_ago${normal_text} seconds ago"
 		fi
 	fi
 
@@ -153,12 +161,16 @@ then
 		echo -e "${red_text}can not find \"isBeacon: false\"${normal_text}";
 	else
 		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
+		sync_status_ago=$(( $(date +"%s") - $(date --date=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.time') +%s) ))
+		if [ $sync_status_ago -gt 300 ]; then
+			echo -e "${yellow_text} SYNC status is found $sync_status_ago seconds ago = older than 5 minutes${normal_text}"
+		fi
 		if grep -q "Node is now IN SYNC!" <<< "$sync_status"; then
-			echo Node is in SYNC
+			echo -e "Node is in ${green_text}SYNC${normal_text}"
 		elif grep -q "Node is Not in Sync" <<< "$sync_status"; then
-			echo -e "${red_text}node is not in sync;${normal_text} latest SYNC status=$sync_status";
+			echo -e "Node is ${red_text}not in sync;${normal_text} latest SYNC status=\"${sync_status}\"";
 		else
-			echo -e "\033[33Node SYNC some unknown status=${normal_text}$sync_status"
+			echo -e "${yellow_text}Node SYNC has unknown status=${normal_text}\"${sync_status}\""
 		fi
 	fi
 
