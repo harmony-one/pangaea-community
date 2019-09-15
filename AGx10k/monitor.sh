@@ -23,26 +23,11 @@ fi
 command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; echo >&2 "try apt-get install jq."; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "I require curl but it's not installed.  Aborting."; echo >&2 "try apt-get install curl."; exit 1; }
 command -v pgrep >/dev/null 2>&1 || { echo >&2 "I require pgrep but it's not installed.  Aborting."; echo >&2 "try apt-get install procps."; exit 1; }
-if command -v tput >/dev/ull 2>&1; then
-	bold_text=$(tput bold)
-	normal_text=$(tput sgr0)
-	black_text=$(tput setaf 0)
-	red_text=$(tput setaf 1)
-	green_text=$(tput setaf 2)
-	yellow_text=$(tput setaf 3)
-
-	### fix colors for bash -x debugging
-	echo -e "${normal_text}"
-else
-	bold_text=""
-	normal_text=""
-	black_text=""
-	red_text=""
-	green_text=""
-	yellow_text=""
-fi
-
-
+#### colors
+normal_text="\e[39m"
+red_text="\e[31m"
+green_text="\e[32m"
+yellow_text="\e[33m"
 
 
 cd "${HARMONY_ROOT}"
