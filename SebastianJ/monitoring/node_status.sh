@@ -4,10 +4,10 @@
 #
 # Contributors:
 # Script/binaries last modified date: Sophoah - https://github.com/sophoah
-#
+# More eloquent parsing of shard_*: Agx10k - https://github.com/AGx10k
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1.6"
+version="0.1.7"
 script_name="node_status.sh"
 script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
@@ -25,6 +25,7 @@ Options:
    -c count     the maximum number of blocks your node can be behind your shard's reported block count before errors are reported. Defaults to 1000 blocks
    -s seconds   the maximum number of seconds since your last bingo before errors are reported. Defaults to 3600 = 1 hour
    -d           if the process should be daemonized / run in an endless loop (e.g. if running it using Systemd and not Cron)
+   -e           output errors parsed from latest/zerolog*.log to a separate error log file
    -t           use the Pangaea network
    -m           use the Mainnet network
    -f           disable color and text formatting
@@ -34,7 +35,7 @@ Options:
 EOT
 }
 
-while getopts "n:w:i:c:s:dtmfyzh" opt; do
+while getopts "n:w:i:c:s:detmfyzh" opt; do
   case ${opt} in
     n)
       node_path="${OPTARG%/}"
@@ -57,6 +58,9 @@ while getopts "n:w:i:c:s:dtmfyzh" opt; do
       ;;
     d)
       daemonize=true
+      ;;
+    e)
+      use_error_log=true
       ;;
     t)
       pangaea=true
@@ -88,13 +92,13 @@ shift $((OPTIND-1))
 # Variable setup
 #
 
+executing_user=`whoami`
+
 # Interval between checking node status
 # E.g: 30s => 30 seconds, 1m => 1 minute, 1h => 1 hour
 if [ -z "$interval" ]; then
   interval=1m
 fi
-
-executing_user=`whoami`
 
 if [ -z "$node_path" ]; then
   node_path=${HOME}
@@ -118,6 +122,10 @@ if [ -z "$perform_formatting" ]; then
   perform_formatting=true
 fi
 
+if [ -z "$use_error_log" ]; then
+  use_error_log=false
+fi
+
 if [ -z "$debug" ]; then
   debug=false
 fi
@@ -127,6 +135,8 @@ if [ -z "$disable_version_checking" ]; then
 fi
 
 temp_dir="node_status"
+correct_bootnode="54.86.126.90"
+error_log_file="node_status_errors.log"
 
 #
 # Formatting setup
@@ -173,16 +183,21 @@ check_for_correct_installation() {
   output_header "${header_index}. Installation - checking that your installation is correct"
   ((header_index++))
   
+  echo "${bold_text}BLS file:${normal_text}"
+  
   if ls $node_path/*.key 1> /dev/null 2>&1; then
     success_message "BLS file detected in correct location: ${bold_text}YES${normal_text}"
   else
     error_message "BLS file detected in correct location: ${bold_text}NO${normal_text}"
   fi
   
+  echo ""
+  echo "${bold_text}Node:${normal_text}"
+  
   if test -f $node_path/node.sh; then
     node_script_installed=true
     file_modification_date "${node_path}/node.sh"
-    success_message "node.sh installed: ${bold_text}YES (Last modified: ${file_date})${normal_text}"
+    success_message "node.sh installed: ${bold_text}YES.${normal_text}${green_text} Last modified: ${bold_text}${file_date}.${normal_text}"
   else
     error_message "node.sh installed: ${bold_text}NO${normal_text}"
     error_message "Are you sure you've entered the correct node path ($node_path) and that you've installed node.sh?"
@@ -191,17 +206,21 @@ check_for_correct_installation() {
   if test -f $node_path/harmony; then
     node_binary_installed=true
     file_modification_date "${node_path}/harmony"
-    success_message "node binary installed: ${bold_text}YES (Last modified: ${file_date})${normal_text}"
+    parse_build "${node_path}/harmony"
+    success_message "node binary installed: ${bold_text}YES.${normal_text}${green_text} Build: ${bold_text}${build}${normal_text}${green_text}. Last modified: ${bold_text}${file_date}.${normal_text}"
   else
     echo
     error_message "node binary installed: ${bold_text}NO${normal_text}"
     error_message "Are you sure you've entered the correct node path ($node_path) and that you've installed the node binary ($node_path/harmony)?"
   fi
   
+  echo ""
+  echo "${bold_text}Wallet:${normal_text}"
+  
   if test -f $wallet_path/wallet.sh; then
     wallet_script_installed=true
     file_modification_date "${wallet_path}/wallet.sh"
-    success_message "wallet.sh installed: ${bold_text}YES (Last modified: ${file_date})${normal_text}"
+    success_message "wallet.sh installed: ${bold_text}YES.${normal_text}${green_text} Last modified: ${bold_text}${file_date}.${normal_text}"
   else
     echo
     error_message "wallet.sh installed: ${bold_text}NO${normal_text}"
@@ -211,7 +230,8 @@ check_for_correct_installation() {
   if test -f $wallet_path/wallet; then
     wallet_binary_installed=true
     file_modification_date "${wallet_path}/wallet"
-    success_message "wallet binary installed: ${bold_text}YES (Last modified: ${file_date})${normal_text}"
+    parse_build "${wallet_path}/wallet"
+    success_message "wallet binary installed: ${bold_text}YES.${normal_text}${green_text} Build: ${bold_text}${build}${normal_text}${green_text}. Last modified: ${bold_text}${file_date}.${normal_text}"
   else
     echo
     error_message "wallet binary installed: ${bold_text}NO${normal_text}"
@@ -256,18 +276,22 @@ check_wallet() {
 check_node() {
   output_header "${header_index}. Node - checking that your node is running"
   ((header_index++))
+  
+  if ps aux | grep '[h]armony -bootnodes' | grep $correct_bootnode > /dev/null; then
+    success_message "Node is running and using the correct bootnodes: ${bold_text}YES${normal_text}"
     
-  check_bls_keyfile_status "${address}"
-  
-  if [ -z "$bls_public_key" ]; then
-    error_message "Couldn't find your node's address in the bls public key list on https://bit.ly/pga-keys - are you sure that you are using a correct bls key file?"
-    error_message "Please contact an admin on https://t.me/harmonypangaea or in the Discord #pangaea channel."
-  else
-    success_message "Your node is running using the bls public key: ${bold_text}${bls_public_key}${normal_text}"
-  fi
-  
-  if ps aux | grep '[h]armony -bootnodes' | grep 54.86.126.90 > /dev/null; then
-    success_message "Node is running and using the latest bootnodes: ${bold_text}YES${normal_text}"
+    parse_bootnodes
+    
+    if [ ! -z "$bootnodes" ]; then
+      success_message "Your node is running using the bootnodes:"
+    
+      for bootnode in "${bootnodes[@]}"; do
+        success_message "${bold_text}$bootnode${normal_text}"
+      done
+      
+      echo ""
+    fi
+    
     node_running=true
   else
     error_message "Node is running and using the latest bootnodes: ${bold_text}NO${normal_text}"
@@ -283,7 +307,7 @@ check_node() {
       error_message "Restart your node:"
       error_message "cd $node_path; sudo ./node.sh${network_switch} -c"
     else
-      error_message "Please start your node as soon as possible: cd ${node_path}; ./node.sh${network_switch} (don't forget to run the command in tmux if you're using tmux)"
+      warning_message "Please start your node as soon as possible: cd ${node_path}; ./node.sh${network_switch} (don't forget to run the command in tmux if you're using tmux)"
     fi
   fi
   
@@ -292,7 +316,17 @@ check_node() {
   if [ -z "$shard" ]; then
     error_message "Can't determine your shard id - can't parse your shard id from your node directory."
   else
-    success_message "Detected shard: ${bold_text}${shard}${normal_text}"
+    success_message "Your node is running on shard: ${bold_text}shard ${shard}${normal_text}"
+  fi
+  
+  check_bls_keyfile_status "${address}"
+  echo ""
+  
+  if [ -z "$bls_public_key" ]; then
+    error_message "Couldn't find your node's address in the bls public key list on https://bit.ly/pga-keys - are you sure that you are using a correct bls key file?"
+    warning_message "Please contact an admin in @harmonypangaea on Telegram or in the Discord #pangaea channel."
+  else
+    success_message "Your node is running using the bls public key: ${bold_text}${bls_public_key}${normal_text}"
   fi
   
   output_footer
@@ -303,10 +337,12 @@ check_network_status() {
   ((header_index++))
   
   pangaea_status_url="https://harmony.one/pga"
-  download_file "$pangaea_status_url" "network"
+  network_file="network"
+  download_file "$pangaea_status_url" "$network_file"
   
-  if [ -f "${temp_dir}/network" ]; then
-    success_message "Successfully fetched the network status from ${full_url} - last network update: ${bold_text}${network_time}${normal_text}"
+  if [ -f "${temp_dir}/${network_file}" ]; then
+    network_last_updated_at=`head -1 ${temp_dir}/${network_file} | sed -E "s/(\[|\])//g"`
+    success_message "Successfully fetched the network status from ${full_url} - last network update: ${bold_text}${network_last_updated_at}${normal_text}"
     echo
 
     echo "${bold_text}Shard status:${normal_text}"
@@ -315,21 +351,16 @@ check_network_status() {
       error_message "Can't determine your shard id. There might be issues with your node or the entire network."
       error_message "Outputting all shard statuses below:"
       echo 
-      cat ${temp_dir}/network | grep -A 5 'SHARD STATUS'
+      cat ${temp_dir}/${network_file} | grep -A 5 'SHARD STATUS'
     else
-      shard_data=$(cat ${temp_dir}/network | grep -i -m 1 "Shard $shard")
+      shard_data=$(cat ${temp_dir}/${network_file} | grep -i -m 1 "Shard $shard")
   
       if [ -z "$shard_data" ]; then
         error_message "Couldn't download the network file from ${full_url}"
-      else
-        shard_status=`echo $shard_data | grep -oam 1 -E "Status is: (ONLINE|OFFLINE)" | grep -oam 1 -E "(ONLINE|OFFLINE)"`
-        network_time=`echo $shard_data | grep -oam 1 -E "\(Last updated:.*" | sed "s/(Last updated: //g"`
-        network_time="${network_time%)}"
+      else        
+        parse_network_shard_data "$shard_data"
     
         if [ "$shard_status" = "ONLINE" ]; then
-          current_network_block=`echo $shard_data | grep -oam 1 -E "Block ([0-9]+)" | grep -oam 1 -E "[0-9]+"`
-          convert_to_integer "$current_network_block"
-          current_network_block=$converted
           success_message "Shard ${bold_text}${shard}${normal_text}${green_text} is: ${bold_text}${shard_status}${normal_text}"
           success_message "Your shard's latest recorded block is: ${bold_text}${current_network_block}${normal_text}"
         else
@@ -358,7 +389,7 @@ check_network_status() {
         if [ "$node_running" = true ]; then
           error_message "Your node has been detected as running on your server but the Harmony Pangaea Network status page (https://harmony.one/pga/network) reports you as OFFLINE."
           warning_message "If this issue continues after the next network status update (usually happens within the next 15-30 minutes) there might be a misconfigured or erronous internal node running your address."
-          warning_message "Please report your address ${address} to the support representatives on https://t.me/harmonypangaea or in the Discord #pangaea channel."
+          warning_message "Please report your address ${address} to the support representatives in @harmonypangaea on Telegram or in the Discord #pangaea channel."
         else
           error_message "There's no node running on your server and Harmony's Network status page has reported you as OFFLINE."
           error_message "Please start your node as soon as possible: cd ${node_path}; ./node.sh${network_switch} (don't forget to run the command in tmux if you're using tmux)"
@@ -396,7 +427,7 @@ check_sync_consensus_status() {
         if [ "$shard_status" = "ONLINE" ]; then
           error_message "Either the node hasn't been online for a while or something's wrong with your node configuration."
         else
-          error_message "Your shard is currently down. Please check https://t.me/harmonypangaea or the Discord #pangaea channel for network updates."
+          error_message "Your shard is currently down. Please check @harmonypangaea on Telegram or the Discord #pangaea channel for network updates."
         fi
       else
         success_message "Your node is fully synced: ${bold_text}YES${normal_text}"
@@ -411,7 +442,7 @@ check_sync_consensus_status() {
   
   if [ -z "$current_bingo" ]; then
     error_message "Bingo status: couldn't find any recent bingos!"
-    warning_message "There might be network issues - please check https://t.me/harmonypangaea or the Discord #pangaea channel for network updates."
+    warning_message "There might be network issues - please check @harmonypangaea on Telegram or the Discord #pangaea channel for network updates."
   else
     
     if [ "$bingo_date_parsed" = true ]; then
@@ -429,7 +460,7 @@ check_sync_consensus_status() {
         if [ "$shard_status" = "ONLINE" ]; then
           error_message "Either the node hasn't been online for a while or something's wrong with your node configuration."
         else
-          error_message "Your shard is currently down. Please check https://t.me/harmonypangaea or the Discord #pangaea channel for network updates."
+          error_message "Your shard is currently down. Please check @harmonypangaea on Telegram or the Discord #pangaea channel for network updates."
         fi
       
       else
@@ -474,6 +505,15 @@ check_wallet_balances() {
 #
 # Helper methods
 #
+
+parse_build() {
+  build=`file ${1} | grep -oam 1 -E "BuildID\[sha1\]=[a-zA-Z0-9]+" | grep -oam 1 -E "=[a-zA-Z0-9]+" | sed s/=//`
+}
+
+parse_bootnodes() {
+  bootnodes=($(ps aux | grep "[h]armony -bootnodes" | grep -oam 1 -E "\/ip4\/[0-9\.]*" | sed "s|/ip4/||g"))
+}
+
 parse_current_bingo() {
   parse_from_zerolog "bingo"
   
@@ -531,6 +571,9 @@ parse_from_zerolog() {
     pending_transactions)
       parsed_zerolog_value=`tac ${node_path}/latest/zero*.log | grep -oam 1 -E "\"totalPending\":[0-9]+" | grep -oam 1 -E "[0-9]+"`
       ;;
+    error_messages)
+      parsed_zerolog_value=`tac ${node_path}/latest/zero*.log | grep "level\":\"error\""`
+      ;;
     *)
       ;;
     esac
@@ -544,6 +587,11 @@ parse_shard_id() {
 }
 
 detect_shard_id() {
+  shard=`cd ${node_path} && ls -d harmony_db_* | tail -1 | cut -c12- && cd - 1> /dev/null 2>&1`
+}
+
+# Remove later if newer detect_shard_id works correctly
+deprecated_detect_shard_id() {
   possible_shard_ids=($(sudo ls -d ${node_path}/harmony_db_* | sed "s|${node_path}/harmony_db_||g"))
   
   for possible_shard in "${possible_shard_ids[@]}"
@@ -558,6 +606,15 @@ detect_shard_id() {
       fi
     fi
   done
+}
+
+parse_network_shard_data() {
+  shard_status=`echo ${1} | grep -oam 1 -E "Status is: (ONLINE|OFFLINE)" | grep -oam 1 -E "(ONLINE|OFFLINE)"`
+  shard_data_updated_at=`echo ${1} | grep -oam 1 -E "\(Last updated:.*" | sed "s/(Last updated: //g"`
+  
+  current_network_block=`echo ${1} | grep -oam 1 -E "Block ([0-9]+)" | grep -oam 1 -E "[0-9]+"`
+  convert_to_integer "$current_network_block"
+  current_network_block=$converted
 }
 
 parse_timestamp() {
@@ -613,6 +670,18 @@ file_modification_date() {
   file_date=$(date -r ${1})
 }
 
+log_error_messages_to_log_file() {
+  if [ "$use_error_log" = true ]; then
+    if [ "$node_running" = false ] || [ -z "$current_bingo" ] || [ -z "$reported_as_online" ] || [ "$shard_status" = "OFFLINE" ]; then
+      parse_from_zerolog "error_messages"
+  
+      if [ ! -z "$parsed_zerolog_value" ]; then
+        echo $parsed_zerolog_value > $error_log_file
+      fi
+    fi
+  fi
+}
+
 download_file() {
   mkdir -p $temp_dir
   rm -rf "${temp_dir}/${2}"
@@ -626,6 +695,7 @@ download_file() {
 }
 
 setup() {
+  rm -rf $error_log_file
   mkdir -p $temp_dir
 }
 
@@ -678,7 +748,7 @@ output_footer() {
 }
 
 output_separator() {
-  echo "--------------------------------------------------------------"
+  echo "------------------------------------------------------------------------"
 }
 
 
@@ -694,14 +764,17 @@ check_status() {
   check_for_correct_installation
   check_wallet
   check_node
+  check_sync_consensus_status
   
   if [ "$pangaea" = true ]; then
     check_network_status
   fi
   
-  check_sync_consensus_status
+  
   check_transactions
   check_wallet_balances
+  
+  log_error_messages_to_log_file
   
   cleanup
   header_index=1
