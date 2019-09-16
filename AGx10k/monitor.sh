@@ -21,7 +21,10 @@ else
 fi
 
 command -v jq >/dev/null 2>&1 || { echo >&2 "I require jq but it's not installed.  Aborting."; echo >&2 "try apt-get install jq."; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo >&2 "I require curl but it's not installed.  Aborting."; echo >&2 "try apt-get install curl."; exit 1; }
+command -v wget > /dev/null 2>&1 && wget_is_installed="yes" || \
+	command -v curl > /dev/null 2>&1 && curl_is_installed="yes" || \
+		{ echo >&2 "I require curl OR wget but they are not installed. Aborting."; \
+		echo >&2 "try sudo apt-get install curl. or sudo apt-get install wget"; exit 1; }
 command -v pgrep >/dev/null 2>&1 || { echo >&2 "I require pgrep but it's not installed.  Aborting."; echo >&2 "try apt-get install procps."; exit 1; }
 #### colors
 normal_text="\e[0m"
@@ -29,6 +32,16 @@ red_text="\e[31m"
 green_text="\e[32m"
 yellow_text="\e[33m"
 NOT_found="${red_text}NOT found${normal_text}"
+
+function get_pga_out () {
+	if [ $wget_is_installed ];
+	then
+		pga_out=$(wget -qO- https://harmony.one/pga/network.json)
+	else
+		pga_out=$(curl -s https://harmony.one/pga/network.json)
+	fi
+}
+
 
 
 cd "${HARMONY_ROOT}"
@@ -77,7 +90,7 @@ then
 		echo -e "${yellow_text}found $number_of_wallets wallets${normal_text};will use first=$wallet"
 	fi
 
-	pga_out=$(curl -s https://harmony.one/pga/network.json);
+	get_pga_out
 	if [[ $(tr -d " \t\n\r"  <<< "$pga_out" | wc -c) -lt 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$pga_out" ; then
 		echo -e "${yellow_text}https://harmony.one/pga/network.json is not a valid JSON. will not parse node/shard status${normal_text}"
 	elif [ -z "$shardid" ] ; then
@@ -111,7 +124,7 @@ then
 			xoffline)
 				case $nodestatus in
 					null)					#### nodestatus is "null" when searching it in online list - it is offline
-						echo -e "wallet ${wallet} is ${yellow_text}OFFLINE${normal_text}; shard $shardid is ${yellow_text}OFFLINE${normal_text} ${shardstatus_text}"
+						echo -e "$wallet ${wallet} is ${yellow_text}OFFLINE${normal_text}; shard $shardid is ${yellow_text}OFFLINE${normal_text} ${shardstatus_text}"
 					;;
 					''|*[!0-9]*)			#### nodestatus is empty string or something NOT numbers - error
 						echo "possible error parsing pga/network output - nodestatus is not null/numbers"
