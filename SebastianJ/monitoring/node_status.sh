@@ -365,6 +365,7 @@ check_network_status() {
           success_message "Your shard's latest recorded block is: ${bold_text}${current_network_block}${normal_text}"
         else
           error_message "Shard ${bold_text}${shard}${normal_text}${red_text} is: ${bold_text}${shard_status}${normal_text}"
+          warning_message "Please check @harmonypangaea on Telegram or the Discord #pangaea channel for network updates."
         fi
       fi
     fi
