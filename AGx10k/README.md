@@ -20,8 +20,9 @@ these scripts should be installed in a directory which your harmony files are. B
 ## Dependencies
 `monitor.sh` expects these commands:
  * `jq`: `sudo apt-get install jq`(Ubuntu/Debian/etc) or `sudo yum install jq`(CentOS/RedHat/etc)
- * `curl`: `sudo apt-get install curl`(Ubuntu/Debian/etc) or `sudo yum install curl`(CentOS/RedHat/etc)
  * `pgrep`: `sudo apt-get install procps`(Ubuntu/Debian/etc) or `sudo yum install procps-ng`(CentOS/RedHat/etc)
+ * `wget` or `curl`: `sudo apt-get install curl`(Ubuntu/Debian/etc) or `sudo yum install curl`(CentOS/RedHat/etc)
+
 
 ### Download (update same way)
 ```shell
