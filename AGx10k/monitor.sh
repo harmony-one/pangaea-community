@@ -147,7 +147,7 @@ then
 	if [ $? -gt 0 ]; then
 		echo -e "BINGO: ${NOT_found}"
 	else
-		last_bingo_ago=$(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) ))
+		last_bingo_ago=$(printf "%3s" $(( $(date +"%s") - $(date --date=$(jq -r '.time' <<< "$last_bingo_found") +%s) )) )
 		if [ $last_bingo_ago -gt 300 ];
 		then
 			echo -e "${red_text}BINGO: was found $last_bingo_ago seconds ago${normal_text} - more than 5 minutes!"
@@ -164,7 +164,7 @@ then
 		echo -e "SYNC: ${NOT_found}(${red_text}can not find \"isBeacon: false\" in zerolog*.log${normal_text})";
 	else
 		sync_status=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.message')
-		sync_status_ago=$(( $(date +"%s") - $(date --date=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.time') +%s) ))
+		sync_status_ago=$(printf "%3s" $(( $(date +"%s") - $(date --date=$(tail -n 1 <<< "$zerolog_SYNC_strings" | jq -r '.time') +%s) )))
 		if [ $sync_status_ago -gt 300 ]; then
 			sync_status_text=" (${yellow_text}SYNC is found $sync_status_ago seconds ago = older than 5 minutes${normal_text})"
 		else
