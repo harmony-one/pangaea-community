@@ -7,7 +7,7 @@
 # More eloquent parsing of shard_*: Agx10k - https://github.com/AGx10k
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1.7"
+version="0.1.8"
 script_name="node_status.sh"
 script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
@@ -166,14 +166,19 @@ fi
 check_version() {
   if [ "$disable_version_checking" = false ]; then
     parse_current_script_version
-  
-    if [ ! "$version" = "$latest_script_version" ]; then
-      echo "${yellow_text}${bold_text}"
-      echo "You're running an old version of ${script_name}! Latest available version is ${latest_script_version} and you're running version ${version}"
-      echo "Please upgrade your script using the following command:"
-      echo
-      echo "sudo rm -rf ${script_name} && sudo wget -q ${script_url} && sudo chmod u+x ${script_name}"
-      echo "${normal_text}"
+    
+    if [ ! -z "$latest_script_version" ]; then
+      if [ ! "$version" = "$latest_script_version" ]; then
+        echo "${yellow_text}${bold_text}"
+        echo "You're running an old version of ${script_name}! Latest available version is ${latest_script_version} and you're running version ${version}"
+        echo "Please upgrade your script using the following command:"
+        echo
+        echo "sudo rm -rf ${script_name} && sudo wget -q ${script_url} && sudo chmod u+x ${script_name}"
+        echo "${normal_text}"
+        exit 1
+      fi
+    else
+      error_message "Can't download the latest script version to perform version checking. Are you sure you are running this script with appropriate permissions?"
       exit 1
     fi
   fi
@@ -540,16 +545,20 @@ parse_sync_status() {
 
 parse_current_block() {
   parse_from_zerolog "block" "$shard"
-  current_block=$parsed_zerolog_value
-  convert_to_integer "$current_block"
-  current_block=$converted
+  
+  if [ ! -z "$parsed_zerolog_value" ]; then
+    convert_to_integer "$parsed_zerolog_value"
+    current_block=$converted
+  fi
 }
 
 parse_pending_transactions() {
   parse_from_zerolog "pending_transactions"
-  pending_transactions=$parsed_zerolog_value
-  convert_to_integer "$pending_transactions"
-  pending_transactions=$converted
+  
+  if [ ! -z "$parsed_zerolog_value" ]; then
+    convert_to_integer "$parsed_zerolog_value"
+    pending_transactions=$converted
+  fi
 }
 
 parse_from_zerolog() {
@@ -588,15 +597,16 @@ parse_shard_id() {
 }
 
 detect_shard_id() {
-  shard=`cd ${node_path} && ls -d harmony_db_* | tail -1 | cut -c12- && cd - 1> /dev/null 2>&1`
+  if ls -d $node_path/harmony_db_* 1> /dev/null 2>&1; then
+    shard=`ls -d ${node_path}/harmony_db_* | tail -1 | sed "s|${node_path}/||g" | cut -c12-`
+  fi
 }
 
 # Remove later if newer detect_shard_id works correctly
 deprecated_detect_shard_id() {
   possible_shard_ids=($(sudo ls -d ${node_path}/harmony_db_* | sed "s|${node_path}/harmony_db_||g"))
   
-  for possible_shard in "${possible_shard_ids[@]}"
-  do
+  for possible_shard in "${possible_shard_ids[@]}"; do
     convert_to_integer "$possible_shard"
     
     if [ -z "$shard" ]; then
@@ -624,10 +634,13 @@ parse_timestamp() {
 }
 
 parse_current_script_version() {
-  mkdir -p $temp_dir
-  latest_script_file_name="latest_script.sh"
-  latest_script_version=`rm -rf ${latest_script_file_name} && wget -q -O "${temp_dir}/${latest_script_file_name}" $script_url && cat ${temp_dir}/${latest_script_file_name} | grep -oam 1 -E "version=\"[^\"]+\"" | sed "s/version=\"//" | sed "s/\"//"`
-  rm -rf "${temp_dir}/${latest_script_file_name}"
+  mkdir -p $temp_dir 1> /dev/null 2>&1
+  
+  if test -d $temp_dir; then
+    latest_script_file_name="latest_script.sh"
+    latest_script_version=`rm -rf ${latest_script_file_name} && wget -q -O "${temp_dir}/${latest_script_file_name}" $script_url && cat ${temp_dir}/${latest_script_file_name} | grep -oam 1 -E "version=\"[^\"]+\"" | sed "s/version=\"//" | sed "s/\"//"`
+    rm -rf "${temp_dir}/${latest_script_file_name}"
+  fi
 }
 
 convert_to_integer() {
