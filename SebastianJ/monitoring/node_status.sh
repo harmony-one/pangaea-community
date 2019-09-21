@@ -7,7 +7,7 @@
 # More eloquent parsing of shard_*: Agx10k - https://github.com/AGx10k
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1.8"
+version="0.1.9"
 script_name="node_status.sh"
 script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
@@ -25,7 +25,6 @@ Options:
    -c count     the maximum number of blocks your node can be behind your shard's reported block count before errors are reported. Defaults to 1000 blocks
    -s seconds   the maximum number of seconds since your last bingo before errors are reported. Defaults to 3600 = 1 hour
    -d           if the process should be daemonized / run in an endless loop (e.g. if running it using Systemd and not Cron)
-   -e           output errors parsed from latest/zerolog*.log to a separate error log file
    -t           use the Pangaea network
    -m           use the Mainnet network
    -f           disable color and text formatting
@@ -35,7 +34,7 @@ Options:
 EOT
 }
 
-while getopts "n:w:i:c:s:detmfyzh" opt; do
+while getopts "n:w:i:c:s:dtmfyzh" opt; do
   case ${opt} in
     n)
       node_path="${OPTARG%/}"
@@ -58,9 +57,6 @@ while getopts "n:w:i:c:s:detmfyzh" opt; do
       ;;
     d)
       daemonize=true
-      ;;
-    e)
-      use_error_log=true
       ;;
     t)
       pangaea=true
@@ -93,6 +89,7 @@ shift $((OPTIND-1))
 #
 
 executing_user=`whoami`
+current_dir=`pwd`
 
 # Interval between checking node status
 # E.g: 30s => 30 seconds, 1m => 1 minute, 1h => 1 hour
@@ -123,7 +120,7 @@ if [ -z "$perform_formatting" ]; then
 fi
 
 if [ -z "$use_error_log" ]; then
-  use_error_log=false
+  use_error_log=true
 fi
 
 if [ -z "$debug" ]; then
@@ -134,9 +131,11 @@ if [ -z "$disable_version_checking" ]; then
   disable_version_checking=false
 fi
 
-temp_dir="node_status"
+data_dir="node_status"
+cache_dir="${data_dir}/cache"
+temp_dir="${data_dir}/temp"
+error_log_file="${data_dir}/errors.log"
 correct_bootnode="54.86.126.90"
-error_log_file="node_status_errors.log"
 
 #
 # Formatting setup
@@ -169,6 +168,9 @@ check_version() {
     
     if [ ! -z "$latest_script_version" ]; then
       if [ ! "$version" = "$latest_script_version" ]; then
+        # Remove old data dir in preparation for the new script installation (data formats etc. might've changed in the new version)
+        rm -rf $data_dir
+        
         echo "${yellow_text}${bold_text}"
         echo "You're running an old version of ${script_name}! Latest available version is ${latest_script_version} and you're running version ${version}"
         echo "Please upgrade your script using the following command:"
@@ -211,8 +213,12 @@ check_for_correct_installation() {
   if test -f $node_path/harmony; then
     node_binary_installed=true
     file_modification_date "${node_path}/harmony"
-    parse_build "${node_path}/harmony"
-    success_message "node binary installed: ${bold_text}YES.${normal_text}${green_text} Build: ${bold_text}${build}${normal_text}${green_text}. Last modified: ${bold_text}${file_date}.${normal_text}"
+    determine_build "$node_path" "harmony"
+    
+    echo ""
+    success_message "node binary installed: ${bold_text}YES.${normal_text}${green_text}"
+    success_message "  Build: ${bold_text}${build}${normal_text}${green_text}."
+    success_message "  Last modified: ${bold_text}${file_date}.${normal_text}"
   else
     echo
     error_message "node binary installed: ${bold_text}NO${normal_text}"
@@ -235,8 +241,13 @@ check_for_correct_installation() {
   if test -f $wallet_path/wallet; then
     wallet_binary_installed=true
     file_modification_date "${wallet_path}/wallet"
-    parse_build "${wallet_path}/wallet"
-    success_message "wallet binary installed: ${bold_text}YES.${normal_text}${green_text} Build: ${bold_text}${build}${normal_text}${green_text}. Last modified: ${bold_text}${file_date}.${normal_text}"
+    
+    determine_build "$wallet_path" "wallet"
+
+    echo ""
+    success_message "wallet binary installed: ${bold_text}YES.${normal_text}${green_text}"
+    success_message "  Build: ${bold_text}${build}${normal_text}${green_text}."
+    success_message "  Last modified: ${bold_text}${file_date}.${normal_text}"
   else
     echo
     error_message "wallet binary installed: ${bold_text}NO${normal_text}"
@@ -512,8 +523,37 @@ check_wallet_balances() {
 # Helper methods
 #
 
-parse_build() {
+parse_build_version() {
+  mkdir -p ${cache_dir} 1> /dev/null 2>&1
+  local build_file_name=${2}_build_version
+  rm -rf ${cache_dir}/${build_file_name}
+  LD_LIBRARY_PATH=${1} ${1}/${2} -version 1> ${cache_dir}/${build_file_name} 2>&1
+  build=$(cat ${cache_dir}/${build_file_name})
+}
+
+parse_build_version_via_file_check() {
   build=`file ${1} | grep -oam 1 -E "BuildID\[sha1\]=[a-zA-Z0-9]+" | grep -oam 1 -E "=[a-zA-Z0-9]+" | sed s/=//`
+}
+
+# $1 is the path to look for the binary
+# $2 is the binary name
+determine_build() {
+  read_integer_from_cache "${2}_modified_epoch"
+  file_modification_date_in_epoch "${1}/${2}"
+  write_to_cache "${2}_modified_epoch" "${file_epoch}"
+  
+  if (( file_epoch > cache_value )); then
+    # Binary has been updated since the last cached value
+    parse_build_version "${1}" "${2}"
+  else
+    read_from_cache "${2}_build_version"
+    
+    if [ -z "$cache_value" ]; then
+      parse_build_version "${1}" "${2}"
+    else
+      build=$cache_value
+    fi
+  fi
 }
 
 parse_bootnodes() {
@@ -634,12 +674,12 @@ parse_timestamp() {
 }
 
 parse_current_script_version() {
-  mkdir -p $temp_dir 1> /dev/null 2>&1
+  mkdir -p $data_dir 1> /dev/null 2>&1
   
-  if test -d $temp_dir; then
+  if test -d $data_dir; then
     latest_script_file_name="latest_script.sh"
-    latest_script_version=`rm -rf ${latest_script_file_name} && wget -q -O "${temp_dir}/${latest_script_file_name}" $script_url && cat ${temp_dir}/${latest_script_file_name} | grep -oam 1 -E "version=\"[^\"]+\"" | sed "s/version=\"//" | sed "s/\"//"`
-    rm -rf "${temp_dir}/${latest_script_file_name}"
+    latest_script_version=`rm -rf ${latest_script_file_name} && wget -q -O "${data_dir}/${latest_script_file_name}" $script_url && cat ${data_dir}/${latest_script_file_name} | grep -oam 1 -E "version=\"[^\"]+\"" | sed "s/version=\"//" | sed "s/\"//"`
+    rm -rf "${data_dir}/${latest_script_file_name}"
   fi
 }
 
@@ -656,23 +696,43 @@ calculate_difference() {
 }
 
 identify_address() {
-  address=`cd $wallet_path; ./wallet.sh$network_switch list | grep -oam 1 -E "account: (one[a-z0-9]+)" | grep -oam 1 -E "one[a-z0-9]+"`
-  cd - 1> /dev/null 2>&1
+  read_from_cache "address"
+
+  if [ -z "$cache_value" ]; then
+    address=`cd $wallet_path; ./wallet.sh$network_switch list | grep -oam 1 -E "account: (one[a-z0-9]+)" | grep -oam 1 -E "one[a-z0-9]+"`
+    write_to_cache "address" "${address}"
+  else
+    address=$cache_value
+  fi
 }
 
 identify_base16_address() {
-  base16_address=`cd $wallet_path; ./wallet.sh$network_switch format --address ${1} | grep -oam 1 -E "0x[a-zA-Z0-9]+"`
-  cd - 1> /dev/null 2>&1
+  read_from_cache "base16_address"
+
+  if [ -z "$cache_value" ]; then
+    base16_address=`cd $wallet_path; ./wallet.sh$network_switch format --address ${1} | grep -oam 1 -E "0x[a-zA-Z0-9]+"`
+    write_to_cache "base16_address" "${base16_address}"
+  else
+    base16_address=$cache_value
+  fi
 }
 
 check_bls_keyfile_status() {
-  download_file "https://bit.ly" "pga-keys"
-  bls_public_key=$(cat ${temp_dir}/pga-keys | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
+  read_from_cache "bls_public_key"
+
+  if [ -z "$cache_value" ]; then
+    download_file "https://bit.ly" "pga-keys"
+    bls_public_key=$(cat ${temp_dir}/pga-keys | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
   
-  if [ -z "$bls_public_key" ]; then
-    # Occasionally the script can't download the key file, fallback to using the github url
-    download_file "https://raw.githubusercontent.com/harmony-one/harmony/master/internal/genesis" "foundational_pangaea.go"
-    bls_public_key=$(cat ${temp_dir}/foundational_pangaea.go | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
+    if [ -z "$bls_public_key" ]; then
+      # Occasionally the script can't download the key file, fallback to using the github url
+      download_file "https://raw.githubusercontent.com/harmony-one/harmony/master/internal/genesis" "foundational_pangaea.go"
+      bls_public_key=$(cat ${temp_dir}/foundational_pangaea.go | grep "${1}" | grep -oam 1 -E "BlsPublicKey: \"[a-z0-9]+\"" | grep -oam 1 -E "\"[a-z0-9]+\"" | grep -oam 1 -E "[a-z0-9]+")
+    fi
+    
+    write_to_cache "bls_public_key" "${bls_public_key}"
+  else
+    bls_public_key=$cache_value
   fi
 }
 
@@ -682,6 +742,42 @@ run_wallet_command() {
 
 file_modification_date() {
   file_date=$(date -r ${1})
+}
+
+file_modification_date_in_epoch() {
+  file_epoch=$(date -r ${1} +%s)  
+  convert_to_integer "$file_epoch"
+  file_epoch=$converted
+}
+
+# $1 = the cache file to write to
+# $2 = the value to write to the cache file
+write_to_cache() {
+  local file_path="${cache_dir}/${1}"
+  mkdir -p ${cache_dir}
+  rm -rf ${file_path}
+  touch ${file_path}
+  echo ${2} > ${file_path}
+}
+
+# $1 = the cache file to read from
+read_from_cache() {
+  local file_path="${cache_dir}/${1}"
+  
+  if test -f $file_path; then
+    cache_value=$(cat ${file_path})
+  else
+    cache_value=""
+  fi
+}
+
+read_integer_from_cache() {
+  read_from_cache $1
+  
+  if [ ! -z "$cache_value" ]; then
+    convert_to_integer "$cache_value"
+    cache_value=$converted
+  fi
 }
 
 log_error_messages_to_log_file() {
@@ -697,7 +793,7 @@ log_error_messages_to_log_file() {
 }
 
 download_file() {
-  mkdir -p $temp_dir
+  mkdir -p "${temp_dir}"
   rm -rf "${temp_dir}/${2}"
   full_url="${1%/}/${2}"
   
@@ -710,7 +806,7 @@ download_file() {
 
 setup() {
   rm -rf $error_log_file
-  mkdir -p $temp_dir
+  mkdir -p $data_dir $cache_dir $temp_dir
 }
 
 cleanup() {
@@ -736,7 +832,7 @@ error_message() {
 
 output_banner() {
   output_header "Running Harmony Mainnet/Pangaea Node Status v${version}"
-  echo "You're running as: ${bold_text}${executing_user}${normal_text}"
+  echo "You're running ${bold_text}${script_name}${normal_text} as ${bold_text}${executing_user}${normal_text} using the path ${bold_text}${current_dir}${normal_text}"
   
   if [ "$pangaea" = true ]; then
     echo "Checking status for the node using the ${bold_text}Pangaea network${normal_text}!"
