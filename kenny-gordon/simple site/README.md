@@ -3,7 +3,7 @@
 
 ## About 
 Just a very quick and dirty site to view logs and check balances and online status.
-There are a lot improvements could be made, extra features added but this was all I needed to check basic information on my phone.
+There are a lot improvements that could be made, extra features added but this was all I needed to check basic information on my phone.
 Feel free to improve it develop it maybe add a flat database and log information for when shards or json service is offline.
 
 ## Installation
