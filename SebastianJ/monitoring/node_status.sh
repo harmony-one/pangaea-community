@@ -7,7 +7,7 @@
 # More eloquent parsing of shard_*: Agx10k - https://github.com/AGx10k
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.1.9"
+version="0.2.0"
 script_name="node_status.sh"
 script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
@@ -348,7 +348,58 @@ check_node() {
   output_footer
 }
 
-check_network_status() {
+check_network_status_using_balance_urls() {
+  output_header "${header_index}. Network status - checking network status for your shard and node"
+  ((header_index++))
+  
+  pangaea_status_url="https://harmony.one/pga"
+  network_file="balances"
+  download_file "$pangaea_status_url" "$network_file"
+  
+  if [ -f "${temp_dir}/${network_file}" ]; then
+    network_last_updated_at=`head -1 ${temp_dir}/${network_file} | sed -E "s/(\[|\])//g"`
+    success_message "Successfully fetched the network status from ${full_url} - last network update: ${bold_text}${network_last_updated_at}${normal_text}"
+    echo
+  else
+    error_message "Couldn't download the network status page https://harmony.one/pga/network. Please check that the URL is accessible and retry again!"
+  fi
+  
+  if [ -z "$address" ]; then
+    echo
+    error_message "Can't figure out your address - won't proceed to check the network status for your node. Please check for errors in section 1 & 2."
+  else
+    download_file "$pangaea_status_url" "balances.csv"
+    reported_as_online=$(cat ${temp_dir}/balances.csv | grep "$address" | grep true)
+  
+    echo
+    echo "${bold_text}Node status:${normal_text}"
+  
+    if [ -z "$reported_as_online" ]; then
+      error_message "Your address ${bold_text}${address}${normal_text}${red_text} is reported as: ${bold_text}OFFLINE!${normal_text}"
+      
+      if [ "$shard_status" = "ONLINE" ]; then
+        if [ "$node_running" = true ]; then
+          error_message "Your node has been detected as running on your server but the Harmony Pangaea Network status page (https://harmony.one/pga/network) reports you as OFFLINE."
+          warning_message "If this issue continues after the next network status update (usually happens within the next 15-30 minutes) there might be a misconfigured or erronous internal node running your address."
+          warning_message "Please report your address ${address} to the support representatives in @harmonypangaea on Telegram or in the Discord #pangaea channel."
+        else
+          error_message "There's no node running on your server and Harmony's Network status page has reported you as OFFLINE."
+          error_message "Please start your node as soon as possible: cd ${node_path}; ./node.sh${network_switch} (don't forget to run the command in tmux if you're using tmux)"
+        fi
+      fi
+    else
+      success_message "Your address ${bold_text}${address}${normal_text}${green_text} is reported as: ${bold_text}ONLINE!${normal_text}"
+      
+      if [ "$node_running" = false ]; then
+        error_message "Your node is currently not running on your server."
+      fi
+    fi
+  fi
+  
+  output_footer
+}
+
+check_network_status_using_network_urls() {
   output_header "${header_index}. Network status - checking network status for your shard and node"
   ((header_index++))
   
@@ -877,9 +928,8 @@ check_status() {
   check_sync_consensus_status
   
   if [ "$pangaea" = true ]; then
-    check_network_status
+    check_network_status_using_balance_urls
   fi
-  
   
   check_transactions
   check_wallet_balances
