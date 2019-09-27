@@ -1,0 +1,39 @@
+/*
+Add custom CSS
+*/
+html {
+	position: relative;
+	min-height: 100%;
+}
+
+body {
+	padding-top: 60px;
+	margin-bottom: 60px;
+}
+
+footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 60px;
+	line-height: 60px;
+	color: #868390;
+}
+
+footer .container {
+	text-align: center;
+	height: 30px;
+	line-height: 30px;
+}
+
+footer .copyright {
+	font-size: 0.6em;
+}
+
+footer .links {
+	font-size: 0.8em;
+}
+
+footer a:hover {
+	color: #888;
+}
