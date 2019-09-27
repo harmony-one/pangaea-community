@@ -21,6 +21,17 @@ A server like Apache, Nginx running the most up to date version of PHP.
 Total balance: [https://harmony.one/pga/balances](https://harmony.one/pga/balances)  
 
 ## Configuration:
-Set Path to Node, This script should be the directory which your harmony files are installed.
+The default login credentials are below but they can be changed by editing the login.php page.  
+
+***Username:*** pangaea  
+***Password:*** pangaea  
+
+Set the Path to your Node by editing output.php, This should be the directory which your harmony files are installed.
 
     $node_path = '/root';
+
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Shard_Status.jpg)  
+ 
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Log_Feed.jpg)  
+ 
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Balance.jpg)  
