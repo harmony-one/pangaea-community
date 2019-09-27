@@ -24,3 +24,7 @@ Total balance: [https://harmony.one/pga/balances](https://harmony.one/pga/balanc
 Set Path to Node by editing output.php, This should be the directory which your harmony files are installed.
 
     $node_path = '/root';
+
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Shard_Status.jpg)
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Log_Feed.jpg)
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Balance.jpg)
