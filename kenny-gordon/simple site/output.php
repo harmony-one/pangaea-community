@@ -31,7 +31,7 @@ $tx_output = shell_exec('tac ' . $node_path . '/transactions.log | grep -a "Tran
     <div class="col-md mr-auto">
       <h1 class="text-left"><span class="badge badge-dark text-wrap">Shard: <?= $shard_output ?></span></h1>
     </div>
-    <div class="col-md-12 mx-auto">
+    <div class="col-md-8 mx-auto">
       <h1 class="text-center"><span class="badge badge-dark text-wrap">Page Refreshed: <?= $udate ?></span></h1>
     </div>
     <div class="col-md ml-auto">
