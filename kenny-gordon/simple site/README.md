@@ -21,6 +21,6 @@ A server like Apache, Nginx running the most up to date version of PHP.
 Total balance: [https://harmony.one/pga/balances](https://harmony.one/pga/balances)  
 
 ## Configuration:
-Set Path to Node, This script should be the directory which your harmony files are installed.
+Set Path to Node by editing output.php, This should be the directory which your harmony files are installed.
 
     $node_path = '/root';
