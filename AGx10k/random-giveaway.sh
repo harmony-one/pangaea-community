@@ -23,12 +23,21 @@ command -v wget > /dev/null 2>&1 && wget_is_installed="yes" || \
 if [ ! -x ${HARMONY_ROOT}/wallet.sh ]; then echo >&2 "oops ${HARMONY_ROOT}/wallet.sh is not executable! Are you sure you did chmod u+x? are you sure that harmony is installed in ${HARMONY_ROOT}?"; exit 2; fi
 if [ ! -x ${HARMONY_ROOT}/wallet ]; then echo >&2 "oops ${HARMONY_ROOT}/wallet is not executable!"; exit 2; fi
 
-function get_pga_network_csv () {
+# function get_pga_network_csv () {
+# 	if [ $wget_is_installed ];
+# 	then
+# 		pga_network_csv=$(wget -qO- https://harmony.one/pga/network.csv)
+# 	else
+# 		pga_network_csv=$(curl -s https://harmony.one/pga/network.csv)
+# 	fi
+# }
+
+function get_pga_balances_csv () {
 	if [ $wget_is_installed ];
 	then
-		pga_network_csv=$(wget -qO- https://harmony.one/pga/network.csv)
+		pga_balances_csv=$(wget -qO- https://harmony.one/pga/balances.csv)
 	else
-		pga_network_csv=$(curl -s https://harmony.one/pga/network.csv)
+		pga_balances_csv=$(curl -s https://harmony.one/pga/balances.csv)
 	fi
 }
 
@@ -45,8 +54,10 @@ do
         echo ""
         date
 
-        get_pga_network_csv
-        online_nodes_in_shard=$(echo "${pga_network_csv}" | grep ",$shardid,true")
+#         get_pga_network_csv
+#         online_nodes_in_shard=$(echo "${pga_network_csv}" | grep ",$shardid,true")
+	nodes_in_shard=$(echo "${pga_balances_csv}" | grep ",$shardid")
+	online_nodes_in_shard=$(echo "${nodes_in_shard}" | grep ",true")
         online_nodes_count=$(echo "${online_nodes_in_shard}" | grep . | wc -l)	### small hack: grep . removes empty lines.
         if [ $online_nodes_count -lt 1 ];
         then
