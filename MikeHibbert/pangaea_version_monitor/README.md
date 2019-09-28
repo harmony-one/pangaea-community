@@ -11,7 +11,7 @@
 
 3) From the folder where your node.sh file is located run setup.sh:
     ```
-    sudo .pangaea-community/MikeHibbert/version_monitor/setup.sh
+    sudo ./pangaea-community/MikeHibbert/version_monitor/setup.sh
     ```
     
 4) while the version monitor is in beta you can turn it off using:
