@@ -7,7 +7,7 @@
 # More eloquent parsing of shard_*: Agx10k - https://github.com/AGx10k
 
 # Harmony Mainnet/Pangaea Node Status
-version="0.2.0"
+version="0.2.1"
 script_name="node_status.sh"
 script_url="https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/monitoring/node_status.sh"
 
@@ -24,6 +24,7 @@ Options:
    -i interval  interval between running the program when running deamonized / using -d (e.g: 30s, 1m, 30m, 1h etc.)
    -c count     the maximum number of blocks your node can be behind your shard's reported block count before errors are reported. Defaults to 1000 blocks
    -s seconds   the maximum number of seconds since your last bingo before errors are reported. Defaults to 3600 = 1 hour
+   -a           include the node's ip address in the reporting
    -d           if the process should be daemonized / run in an endless loop (e.g. if running it using Systemd and not Cron)
    -t           use the Pangaea network
    -m           use the Mainnet network
@@ -34,7 +35,7 @@ Options:
 EOT
 }
 
-while getopts "n:w:i:c:s:dtmfyzh" opt; do
+while getopts "n:w:i:c:s:adtmfyzh" opt; do
   case ${opt} in
     n)
       node_path="${OPTARG%/}"
@@ -54,6 +55,9 @@ while getopts "n:w:i:c:s:dtmfyzh" opt; do
       maximum_block_time_difference="${OPTARG}"
       convert_to_integer "$maximum_block_time_difference"
       maximum_block_time_difference=$converted
+      ;;
+    a)
+      include_ip_address=true
       ;;
     d)
       daemonize=true
@@ -113,6 +117,10 @@ fi
 if [ -z "$maximum_block_time_difference" ]; then
   # Defaults to 1 hour since last bingo if nothing else is specified
   maximum_block_time_difference=3600
+fi
+
+if [ -z "$include_ip_address" ]; then
+  include_ip_address=false
 fi
 
 if [ -z "$perform_formatting" ]; then
@@ -295,6 +303,12 @@ check_node() {
   
   if ps aux | grep '[h]armony -bootnodes' | grep $correct_bootnode > /dev/null; then
     success_message "Node is running and using the correct bootnodes: ${bold_text}YES${normal_text}"
+    
+    if [ "$include_ip_address" = true ]; then
+      parse_node_ip
+      success_message "Your node is running on the ip address: ${bold_text}${node_ip}${normal_text}"
+      echo ""
+    fi
     
     parse_bootnodes
     
@@ -605,6 +619,10 @@ determine_build() {
       build=$cache_value
     fi
   fi
+}
+
+parse_node_ip() {
+  node_ip=$(ps aux | grep "[h]armony -bootnodes" | grep -oam 1 -E "\-ip [0-9\.]*" | grep -oam 1 -E "[0-9\.]*")
 }
 
 parse_bootnodes() {
