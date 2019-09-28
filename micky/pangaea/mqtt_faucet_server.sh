@@ -6,6 +6,7 @@
 
 myaddress=one16p8vky8s0467sk7a63wwww7kgzgefe3hrl4gju
 amount=0.001
+shardid=0
 
 echo "mqtt process will listen to pga/transfer topic"
 echo "using public broker broker.mqttdashboard.com"
@@ -23,7 +24,7 @@ do
 			echo "Array already contains this address, ignore spam to get more from us"
 		else
 			echo "Array does not contain this address yet, transfer allowed"
-			./wallet.sh -t transfer --from $myaddress --to $line --amount 0.001 --shardID 0 --pass pass:
+			./wallet.sh -t transfer --from $myaddress --to $line --amount $amount --shardID $shardid --toShardID $shardid --pass pass:
 			toaddress[i]=$line
             ((i++))
 	 fi
