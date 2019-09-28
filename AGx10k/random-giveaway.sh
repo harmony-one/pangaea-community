@@ -31,6 +31,14 @@ function get_pga_network_csv () {
 		pga_network_csv=$(curl -s https://harmony.one/pga/network.csv)
 	fi
 }
+function get_pga_balances_csv () {
+	if [ $wget_is_installed ];
+	then
+		pga_balances_csv=$(wget -qO- https://harmony.one/pga/balances.csv)
+	else
+		pga_balances_csv=$(curl -s https://harmony.one/pga/balances.csv)
+	fi
+}
 
 cd ${HARMONY_ROOT}
 
@@ -45,8 +53,9 @@ do
         echo ""
         date
 
-        get_pga_network_csv
-        online_nodes_in_shard=$(echo "${pga_network_csv}" | grep ",$shardid,true")
+        #get_pga_network_csv
+	get_pga_balances_csv
+        online_nodes_in_shard=$(echo "${pga_balances_csv}" | grep ",$shardid,,true")
         online_nodes_count=$(echo "${online_nodes_in_shard}" | grep . | wc -l)	### small hack: grep . removes empty lines.
         if [ $online_nodes_count -lt 1 ];
         then
