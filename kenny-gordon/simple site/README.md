@@ -29,9 +29,10 @@ The default login credentials are below but they can be changed by editing the l
 Set the Path to your Node by editing output.php, This should be the directory which your harmony files are installed.
 
     $node_path = '/root';
-
- ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Shard_Status.jpg)  
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/master/kenny-gordon/Mobile.jpg)
  
- ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Log_Feed.jpg)  
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/master/kenny-gordon/Shard_Status.jpg)
  
- ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/patch-1/kenny-gordon/simple%20site/Balance.jpg)  
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/master/kenny-gordon/Log_Feed.jpg)
+ 
+ ![alt text](https://raw.githubusercontent.com/kenny-gordon/pangaea-community/master/kenny-gordon/Balance.jpg)
