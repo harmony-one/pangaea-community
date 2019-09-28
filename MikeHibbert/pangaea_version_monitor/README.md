@@ -23,7 +23,14 @@
    sudo supervisorctl start pangaea_version_monitor
    ```
 
+## Monitoring:
 
+All logs are found in your node root folder under the 'logs' folder you can monitor them with:
+
+    ```
+    tail -f logs/<name of log file you want to monitor>.log
+    ```
+    
 ## NOTES:
 To stop your node you will need to run:
 
