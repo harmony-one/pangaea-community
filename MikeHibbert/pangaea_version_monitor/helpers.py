@@ -88,7 +88,7 @@ def download_new_code():
         
     command_args = [
         "wget", 
-        "https://raw.githubusercontent.com/harmony-one/harmony/master/scripts/node.sh"
+        "https://raw.githubusercontent.com/harmony-one/harmony/pangaea/scripts/node.sh"
     ]
     
     output = subprocess.check_output(command_args)
