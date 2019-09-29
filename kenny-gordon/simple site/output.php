@@ -26,16 +26,16 @@ $tx_output = shell_exec('tac ' . $node_path . '/transactions.log | grep -a "Tran
 
 <div class="col-lg-12 mt-2">
   
-  <div class="row">
+  <div class="row text-center">
 
-    <div class="col-md mr-auto">
-      <h1 class="text-left"><span class="badge badge-dark text-wrap">Shard: <?= $shard_output ?></span></h1>
+    <div class="col-md-auto mr-auto">
+      <h1><span class="badge badge-dark text-wrap">Shard: <?= $shard_output ?></span></h1>
     </div>
-    <div class="col-md-8 mx-auto">
-      <h1 class="text-center"><span class="badge badge-dark text-wrap">Page Refreshed: <?= $udate ?></span></h1>
+    <div class="col-md">
+      <h1><span class="badge badge-dark text-wrap">Page Refreshed: <?= $udate ?></span></h1>
     </div>
-    <div class="col-md ml-auto">
-      <h1 class="text-right"><span class="badge badge-dark text-wrap">Block: <?= $block_output ?></span></h1>
+    <div class="col-md-auto ml-auto">
+      <h1><span class="badge badge-dark text-wrap">Block: <?= $block_output ?></span></h1>
     </div>
 
   </div>
