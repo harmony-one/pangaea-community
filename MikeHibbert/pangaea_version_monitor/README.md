@@ -11,7 +11,7 @@
 
 3) From the folder where your node.sh file is located run setup.sh:
     ```
-    sudo .pangaea-community/MikeHibbert/version_monitor/setup.sh
+    sudo ./pangaea-community/MikeHibbert/pangaea_version_monitor/setup.sh
     ```
     
 4) while the version monitor is in beta you can turn it off using:
@@ -23,7 +23,14 @@
    sudo supervisorctl start pangaea_version_monitor
    ```
 
+## Monitoring:
 
+All logs are found in your node root folder under the 'logs' folder you can monitor them with:
+
+    ```
+    tail -f logs/<name of log file you want to monitor>.log
+    ```
+    
 ## NOTES:
 To stop your node you will need to run:
 

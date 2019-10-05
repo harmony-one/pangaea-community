@@ -1,0 +1,17 @@
+*.wpr
+*.wpu
+*.pyc
+__pycache__/*
+local_settings.py
+*.one
+harmony
+index.html*
+libbls384_256.so
+libcrypto.so.10
+libgmp.so.10
+libgmpxx.so.4
+libmcl.so
+md5sum.txt
+md5sum.txt.new
+node.sh
+
