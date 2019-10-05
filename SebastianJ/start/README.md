@@ -2,7 +2,7 @@
 
 ## Installation
 
-`sudo rm -rf start.sh && sudo wget -q https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/start/start.sh && sudo chmod u+x start.sh`
+`rm -rf start.sh && wget -q https://raw.githubusercontent.com/harmony-one/pangaea-community/master/SebastianJ/start/start.sh && sudo chmod u+x start.sh`
 
 ## Usage
 
